@@ -46,6 +46,8 @@ public class NewNoteActivity extends AppCompatActivity {
         editText = (EditText)findViewById(R.id.new_note_edit_text);
 
         newNoteFile = FileManager.createNewNoteFile(NewNoteActivity.this);
+        newNoteFile.setReadable(true);
+        newNoteFile.setWritable(true);
 
         editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -68,16 +70,20 @@ public class NewNoteActivity extends AppCompatActivity {
             Save the note
          */
         if (newNoteFile != null){
-            try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter(newNoteFile));
-                if (editText != null){
-                    writer.write(editText.getText().toString());
+            if (editText.getText().toString() != null && !editText.getText().toString().equals("")) {
+                try {
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(newNoteFile));
+                    if (editText != null) {
+                        writer.write(editText.getText().toString());
+                    }
+                    writer.flush();
+                    writer.close();
+                    Log.d(TAG, "Text written in file");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                writer.flush();
-                writer.close();
-                Log.d(TAG, "Text written in file");
-            }catch (IOException e){
-                e.printStackTrace();
+            } else {
+                newNoteFile.delete();
             }
         }
     }

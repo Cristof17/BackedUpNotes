@@ -7,4 +7,6 @@
     <string name="state_local">Not Backed Up</string>
     <string name="state_cloud">Backed Up</string>
     <string name="state_modified">Modified</string>
+    <string name="note_unknown_title">Nothing written</string>
+    <string name="backup">Backup</string>
 </resources>

@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
@@ -25,6 +26,7 @@ public class NotesList extends AppCompatActivity {
     private FloatingActionButton addButton;
     private Button backupButton;
     private RecyclerView notesList;
+    private NoteListRecyclerViewAdapter notesListRecyclerViewAdapter;
     private TextView errorTextView;//used for when t
     // he permission is not granted to show to the user
     //she cannot use the app
@@ -34,6 +36,9 @@ public class NotesList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes_list);
+//        FileManager.deleteAllFiles(this);
+//        int files = FileManager.getNumNotes(this);
+//        Toast.makeText(this, "Number of notes = " + files, Toast.LENGTH_SHORT).show();
         /*
             Bind Views
          */
@@ -62,7 +67,7 @@ public class NotesList extends AppCompatActivity {
             }
         });
 
-        NoteListRecyclerViewAdapter notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this);
+        notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this);
         LinearLayoutManager llm = new LinearLayoutManager(this);
         notesList.setAdapter(notesListRecyclerViewAdapter);
         notesList.setLayoutManager(llm);
@@ -88,6 +93,12 @@ public class NotesList extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
 
     private void showPermissionErrorText(){

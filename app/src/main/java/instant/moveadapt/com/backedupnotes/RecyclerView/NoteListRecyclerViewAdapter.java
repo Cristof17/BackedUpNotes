@@ -1,11 +1,14 @@
 package instant.moveadapt.com.backedupnotes.RecyclerView;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
 import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
@@ -54,11 +58,9 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (inflater != null){
-            View rootView = inflater.inflate(R.layout.activity_notes_list, parent, false);
-            MyViewHolder newViewHolder = new MyViewHolder(rootView);
-        }
-        return new MyViewHolder(parent);
+        View rootView = inflater.inflate(R.layout.note_item_layout, parent, false);
+        MyViewHolder newViewHolder = new MyViewHolder(rootView);
+        return newViewHolder;
     }
 
     @Override
@@ -66,26 +68,40 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
         if (holder != null){
 
-            NoteStateView nsv = (NoteStateView) holder.getRootView().findViewById(R.id.note_list_item_image_view);
+            Button state = (Button) holder.getRootView().findViewById(R.id.note_list_item_button);
             TextView tv = (TextView)holder.getRootView().findViewById(R.id.note_list_item_text_view);
 
             File noteFile = FileManager.getFileForIndex(context, position);
+            int numFiles = FileManager.getNumNotes(context);
 
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(noteFile));
                 String firstLine = reader.readLine();
-                if (firstLine != null || !firstLine.equals("")){
+                if (firstLine != null && !firstLine.equals("")){
                     String first10Chars;
-                    if (firstLine.length() >= 10)
+                    if (firstLine.length() >= 10) {
                         first10Chars = firstLine.substring(0, 9);
-                    else
+                        tv.setText(first10Chars + "..");
+                    } else {
                         first10Chars = firstLine;
-                    tv.setText(first10Chars + "..");
-                }
+                        tv.setText(first10Chars);
+                    }
 
-                if (notesStates != null){
-                    int state = notesStates[position];
-                    nsv.setState(state);
+                    Resources resources = context.getResources();
+                    if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_LOCAL){
+                        state.setText(resources.getString(R.string.state_local));
+                        state.setBackgroundColor(Color.RED);
+                    } else if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_GLOBAL){
+                        state.setText(resources.getString(R.string.state_cloud));
+                        state.setBackgroundColor(Color.BLACK);
+                    } else if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_MODIFIED){
+                        state.setText(resources.getString(R.string.state_modified));
+                        state.setBackgroundColor(Color.LTGRAY);
+                    }
+                } else {
+                    Resources resources = context.getResources();
+                    tv.setText(resources.getString(R.string.note_unknown_title));
+                    state.setVisibility(View.INVISIBLE);
                 }
 
             }catch (FileNotFoundException e){
