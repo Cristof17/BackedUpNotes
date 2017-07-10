@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/new_note_toolbar">
+
+    </android.support.v7.widget.Toolbar>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/new_note_edit_text"
+        android:layout_below="@id/new_note_toolbar"
+        android:hint="@string/new_note_hint"
+        android:autoLink="all"
+        android:breakStrategy="high_quality"
+        android:fontFamily="monospace"
+        android:gravity="start"
+        android:shadowColor="@color/colorPrimaryDark"
+        android:shadowDx="2.0"
+        android:shadowDy="2.0"
+        android:padding="10dp"
+        />
+
+</RelativeLayout>
