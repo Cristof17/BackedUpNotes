@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
@@ -33,7 +34,7 @@ import instant.moveadapt.com.backedupnotes.Views.NoteStateView;
 public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> {
 
     private Context context;
-    private int[] notesStates;
+    private ArrayList<Integer> notesStates;
 
     public NoteListRecyclerViewAdapter(Context context){
         this.context = context;
@@ -68,11 +69,9 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
         if (holder != null){
 
-            Button state = (Button) holder.getRootView().findViewById(R.id.note_list_item_button);
+            View rootView = holder.getRootView();
             TextView tv = (TextView)holder.getRootView().findViewById(R.id.note_list_item_text_view);
-
             File noteFile = FileManager.getFileForIndex(context, position);
-            int numFiles = FileManager.getNumNotes(context);
 
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(noteFile));
@@ -89,19 +88,13 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
                     Resources resources = context.getResources();
                     if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_LOCAL){
-                        state.setText(resources.getString(R.string.state_local));
-                        state.setBackgroundColor(Color.RED);
+                        tv.setTextColor(Color.parseColor("#990000"));
                     } else if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_GLOBAL){
-                        state.setText(resources.getString(R.string.state_cloud));
-                        state.setBackgroundColor(Color.BLACK);
-                    } else if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_MODIFIED){
-                        state.setText(resources.getString(R.string.state_modified));
-                        state.setBackgroundColor(Color.LTGRAY);
+                        tv.setTextColor(Color.parseColor("#000000"));
                     }
                 } else {
                     Resources resources = context.getResources();
                     tv.setText(resources.getString(R.string.note_unknown_title));
-                    state.setVisibility(View.INVISIBLE);
                 }
 
             }catch (FileNotFoundException e){

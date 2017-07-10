@@ -23,6 +23,7 @@ import java.security.Permission;
 
 import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
+import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
 import instant.moveadapt.com.backedupnotes.R;
 
 /**
@@ -78,12 +79,14 @@ public class NewNoteActivity extends AppCompatActivity {
                     }
                     writer.flush();
                     writer.close();
+                    setResult(RESULT_OK);
                     Log.d(TAG, "Text written in file");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
                 newNoteFile.delete();
+                setResult(RESULT_CANCELED);
             }
         }
     }

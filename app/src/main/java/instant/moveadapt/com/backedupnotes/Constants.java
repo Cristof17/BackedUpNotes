@@ -13,6 +13,5 @@ public class Constants {
 
     public static final int STATE_LOCAL = 0;
     public static final int STATE_GLOBAL = 1;
-    public static final int STATE_MODIFIED = 2;
 
 }

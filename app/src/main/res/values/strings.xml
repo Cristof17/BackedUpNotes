@@ -4,9 +4,10 @@
     <string name="new_note_hint">You can start typing from here</string>
     <string name="permission_error_text">Cannot use the app because you did not allow access to the storage. To change the settings go to the app permissions in the settings menu and change them</string>
     <string name="no_title">Unknow note</string>
-    <string name="state_local">Not Backed Up</string>
-    <string name="state_cloud">Backed Up</string>
+    <string name="state_local">Phone</string>
+    <string name="state_cloud">Server</string>
     <string name="state_modified">Modified</string>
     <string name="note_unknown_title">Nothing written</string>
     <string name="backup">Backup</string>
+    <string name="delete">Delete</string>
 </resources>

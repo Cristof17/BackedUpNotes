@@ -33,6 +33,10 @@ public class NoteStateView extends View {
         resources = getResources();
     }
 
+    public void setState(int newState){
+        this.state = newState;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -47,10 +51,6 @@ public class NoteStateView extends View {
             Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
             background.setColor(Color.BLUE);
             canvas.drawRect(0, 0, width, height, background);
-        } else if (state == Constants.STATE_MODIFIED) {
-            Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
-            background.setColor(Color.GRAY);
-            canvas.drawRect(0, 0, width, height, background);
         }
 
         if(state == Constants.STATE_LOCAL){
@@ -63,16 +63,7 @@ public class NoteStateView extends View {
             textPaint.setColor(Color.WHITE);
             textPaint.setTypeface(Typeface.MONOSPACE);
             canvas.drawText(resources.getString(R.string.state_local), width/2, height/2, textPaint);
-        } else if (state == Constants.STATE_MODIFIED){
-            Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            textPaint.setColor(Color.WHITE);
-            textPaint.setTypeface(Typeface.MONOSPACE);
-            canvas.drawText(resources.getString(R.string.state_local), width/2, height/2, textPaint);
         }
-    }
-
-    public void setState(int newState){
-        this.state = newState;
     }
 
     public int getState(){
