@@ -3,14 +3,13 @@ package instant.moveadapt.com.backedupnotes.RecyclerView;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import java.io.BufferedReader;
@@ -20,25 +19,28 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
-import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.R;
-import instant.moveadapt.com.backedupnotes.Views.NoteStateView;
 
 /**
  * Created by cristof on 13.06.2017.
  */
 
-public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> {
+public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> implements View.OnLongClickListener, View.OnClickListener{
 
     private Context context;
     private ArrayList<Integer> notesStates;
+    private ActionModeMonitor actionModeMonitor;
+    private RecyclerView recyclerView;
 
-    public NoteListRecyclerViewAdapter(Context context){
+    public NoteListRecyclerViewAdapter(Context context, RecyclerView recyclerView){
         this.context = context;
         this.notesStates = NoteManager.getNotesStates(context);
+        this.recyclerView = recyclerView;
+        this.actionModeMonitor = new ActionModeMonitor(FileManager.getNumNotes(context));
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
@@ -57,9 +59,35 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     }
 
     @Override
+    public boolean onLongClick(View v) {
+        if (v instanceof CardView){
+            int longClickAdapterPosition = recyclerView.getChildAdapterPosition(v);
+            actionModeMonitor.setActivated(longClickAdapterPosition, true);
+            Toast.makeText(context, "Position " + longClickAdapterPosition + " activated " + actionModeMonitor.getActivated(longClickAdapterPosition), Toast.LENGTH_LONG).show();
+            notifyDataSetChanged();
+        }
+        //this callback consumed the event return true
+        return true;
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v instanceof CardView){
+            int position = recyclerView.getChildAdapterPosition(v);
+            if (actionModeMonitor.isSelected()){
+                actionModeMonitor.setActivated(position, (!actionModeMonitor.getActivated(position)));
+                boolean activated = actionModeMonitor.getActivated(position);
+            }
+            notifyDataSetChanged();
+        }
+    }
+
+    @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View rootView = inflater.inflate(R.layout.note_item_layout, parent, false);
+        rootView.setOnLongClickListener(this);
+        rootView.setOnClickListener(this);
         MyViewHolder newViewHolder = new MyViewHolder(rootView);
         return newViewHolder;
     }
@@ -102,11 +130,26 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             }catch (IOException e){
                 e.printStackTrace();
             }
+
+            /*
+                Put the colors
+             */
+            if (actionModeMonitor.getActivated(position)) {
+                rootView.setActivated(actionModeMonitor.getActivated(position));
+                rootView.setBackgroundColor(Color.RED);
+            } else {
+                rootView.setActivated(actionModeMonitor.getActivated(position));
+                rootView.setBackgroundColor(Color.WHITE);
+            }
         }
     }
 
     @Override
     public int getItemCount() {
-        return FileManager.getNumNotes(context);
+        int numberOfItemsInTheList = FileManager.getNumNotes(context);
+        if (actionModeMonitor != null){
+            actionModeMonitor.expandToSize(numberOfItemsInTheList);
+        }
+        return numberOfItemsInTheList;
     }
 }

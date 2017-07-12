@@ -75,7 +75,7 @@ public class NotesList extends AppCompatActivity {
             }
         });
 
-        notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this);
+        notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this, notesList);
         LinearLayoutManager llm = new LinearLayoutManager(this);
         notesList.setAdapter(notesListRecyclerViewAdapter);
         notesList.setLayoutManager(llm);
@@ -147,5 +147,4 @@ public class NotesList extends AppCompatActivity {
         notesList.setVisibility(View.INVISIBLE);
         errorTextView.setText(getResources().getString(R.string.permission_error_text));
     }
-
 }
