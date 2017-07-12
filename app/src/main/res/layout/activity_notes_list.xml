@@ -29,16 +29,6 @@
             android:id="@+id/add_note_button"
             android:layout_margin="20dp"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:text="@string/backup_string"
-            android:layout_margin="20dp"
-            android:id="@+id/backup_button"
-            />
-
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"

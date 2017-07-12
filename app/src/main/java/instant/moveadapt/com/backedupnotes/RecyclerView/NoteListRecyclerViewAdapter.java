@@ -1,8 +1,10 @@
 package instant.moveadapt.com.backedupnotes.RecyclerView;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.view.ActionMode;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -35,12 +37,16 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     private ArrayList<Integer> notesStates;
     private ActionModeMonitor actionModeMonitor;
     private RecyclerView recyclerView;
+    private Activity activity;
+    private ActionMode.Callback actionModeCallback;
 
-    public NoteListRecyclerViewAdapter(Context context, RecyclerView recyclerView){
+    public NoteListRecyclerViewAdapter(Context context, RecyclerView recyclerView, Activity activity, ActionMode.Callback actionModeCallback){
         this.context = context;
         this.notesStates = NoteManager.getNotesStates(context);
         this.recyclerView = recyclerView;
         this.actionModeMonitor = new ActionModeMonitor(FileManager.getNumNotes(context));
+        this.activity = activity;
+        this.actionModeCallback = actionModeCallback;
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
@@ -62,9 +68,12 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     public boolean onLongClick(View v) {
         if (v instanceof CardView){
             int longClickAdapterPosition = recyclerView.getChildAdapterPosition(v);
+            if (!actionModeMonitor.isSelected()){
+                activity.startActionMode(actionModeCallback);
+            }
             actionModeMonitor.setActivated(longClickAdapterPosition, true);
-            Toast.makeText(context, "Position " + longClickAdapterPosition + " activated " + actionModeMonitor.getActivated(longClickAdapterPosition), Toast.LENGTH_LONG).show();
             notifyDataSetChanged();
+            Toast.makeText(context, "Position " + longClickAdapterPosition + " activated " + actionModeMonitor.getActivated(longClickAdapterPosition), Toast.LENGTH_LONG).show();
         }
         //this callback consumed the event return true
         return true;
@@ -77,6 +86,8 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             if (actionModeMonitor.isSelected()){
                 actionModeMonitor.setActivated(position, (!actionModeMonitor.getActivated(position)));
                 boolean activated = actionModeMonitor.getActivated(position);
+            } else {
+                //edit note activity
             }
             notifyDataSetChanged();
         }

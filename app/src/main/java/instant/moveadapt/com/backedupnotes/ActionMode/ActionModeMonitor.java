@@ -14,8 +14,8 @@ public class ActionModeMonitor {
 
     private static final String TAG = "[ActionModeMonitor]";
 
-    private ArrayList<Boolean> selectedItems;
-    private boolean hasItemAlreadySelected;
+    private static ArrayList<Boolean> selectedItems;
+    private static boolean hasItemAlreadySelected;
 
     public ActionModeMonitor(int maxSize){
         selectedItems = new ArrayList<Boolean>(maxSize);
@@ -25,7 +25,7 @@ public class ActionModeMonitor {
         Log.d(TAG, " Monitor booleans size = " + selectedItems.size());
     }
 
-    public void setActivated(int position, boolean selected){
+    public static void setActivated(int position, boolean selected){
         selectedItems.set(position, selected);
         //first element
         if (!hasItemAlreadySelected){
@@ -44,17 +44,17 @@ public class ActionModeMonitor {
         }
     }
 
-    public boolean isSelected(){
-        return this.hasItemAlreadySelected;
+    public static boolean isSelected(){
+        return hasItemAlreadySelected;
     }
 
-    public void expandToSize(int newSize){
+    public static void expandToSize(int newSize){
 
         ArrayList<Boolean> newArrayList = new ArrayList<Boolean>(newSize);
         for (int i = 0; i < newSize; ++i)
             newArrayList.add(false);
         if (selectedItems != null){
-            for (int i = 0; i < selectedItems.size(); ++i){
+            for (int i = 0; i < newSize; ++i){
                 newArrayList.set(i, selectedItems.get(i));
             }
         }
@@ -62,7 +62,7 @@ public class ActionModeMonitor {
         selectedItems = newArrayList;
     }
 
-    public boolean getActivated(int position){
+    public static boolean getActivated(int position){
         return selectedItems.get(position);
     }
 }

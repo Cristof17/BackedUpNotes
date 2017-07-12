@@ -75,4 +75,10 @@ public class FileManager {
         File dir = createNotesFolder(context);
         return dir.listFiles();
     }
+
+    public static void deleteFile(Context context, int position){
+        File dir = createNotesFolder(context);
+        File[] files = dir.listFiles();
+        files[position].delete();
+    }
 }

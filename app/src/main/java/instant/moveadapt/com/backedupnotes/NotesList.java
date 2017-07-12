@@ -9,6 +9,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -22,36 +24,34 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
+import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
 import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 
-public class NotesList extends AppCompatActivity {
+public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
     private static final int NEW_NOTE_REQUEST_CODE = 100;
 
     private FloatingActionButton addButton;
-    private Button backupButton;
     private RecyclerView notesList;
     private NoteListRecyclerViewAdapter notesListRecyclerViewAdapter;
     private TextView errorTextView;//used for when t
     // he permission is not granted to show to the user
     //she cannot use the app
+    private LinearLayoutManager llm;
     private static final String TAG = "[NOTE_LIST]";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes_list);
-//        FileManager.deleteAllFiles(this);
-//        int files = FileManager.getNumNotes(this);
-//        Toast.makeText(this, "Number of notes = " + files, Toast.LENGTH_SHORT).show();
         /*
             Bind Views
          */
         addButton = (FloatingActionButton)findViewById(R.id.add_note_button);
-        backupButton = (Button)findViewById(R.id.backup_button);
         errorTextView = (TextView)findViewById(R.id.error_text_view);
         notesList = (RecyclerView)findViewById(R.id.recycler_view);
 
@@ -75,10 +75,11 @@ public class NotesList extends AppCompatActivity {
             }
         });
 
-        notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this, notesList);
-        LinearLayoutManager llm = new LinearLayoutManager(this);
+        notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this, notesList, this, this);
+        llm = new LinearLayoutManager(this);
         notesList.setAdapter(notesListRecyclerViewAdapter);
         notesList.setLayoutManager(llm);
+        notesList.setItemAnimator(new DefaultItemAnimator());
     }
 
     @Override
@@ -106,7 +107,7 @@ public class NotesList extends AppCompatActivity {
                 FileManager.createNotesFolder(this);
             } else {
                 Log.d(TAG, "Permission for rd/wr to external storage is denied");
-                if (errorTextView !=  null && addButton != null && backupButton != null && notesList != null){
+                if (errorTextView !=  null && addButton != null && notesList != null){
                     showPermissionErrorText();
                 } else {
                     finish();
@@ -129,6 +130,46 @@ public class NotesList extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.note_list_contextual_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        return false;
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.note_list_contextual_delete_action:
+            {
+                //delete the notes which have been selected
+                for (int i = 0; i < FileManager.getNumNotes(NotesList.this); ++i){
+                    if (ActionModeMonitor.getActivated(i)){
+                        FileManager.deleteFile(NotesList.this, i);
+                        notesListRecyclerViewAdapter.notifyItemRemoved(i);
+                        NoteManager.deleteNoteState(NotesList.this, i);
+                    }
+                }
+                return true;
+            }
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode mode) {
+//        int count = FileManager.getNumNotes(NotesList.this);
+//        for (int i = 0; i < count; ++i){
+//            ActionModeMonitor.setActivated(i, false);
+//        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.note_list_menu_backup_action:
@@ -143,8 +184,9 @@ public class NotesList extends AppCompatActivity {
     private void showPermissionErrorText(){
         //set other views to invisible so that the error text view to be visible
         addButton.hide();
-        backupButton.setVisibility(View.INVISIBLE);
         notesList.setVisibility(View.INVISIBLE);
         errorTextView.setText(getResources().getString(R.string.permission_error_text));
     }
+
+
 }
