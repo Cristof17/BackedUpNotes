@@ -158,8 +158,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     @Override
     public int getItemCount() {
         int numberOfItemsInTheList = FileManager.getNumNotes(context);
+        /*
+            Expand the size of the monitor with the new note
+         */
         if (actionModeMonitor != null){
-            actionModeMonitor.expandToSize(numberOfItemsInTheList);
+            actionModeMonitor.refreshSize(numberOfItemsInTheList);
         }
         return numberOfItemsInTheList;
     }

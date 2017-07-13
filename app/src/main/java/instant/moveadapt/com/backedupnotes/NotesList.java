@@ -22,7 +22,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
@@ -138,6 +141,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        ActionModeMonitor.setSelected(true);
         return false;
     }
 
@@ -146,12 +150,14 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         switch(item.getItemId()){
             case R.id.note_list_contextual_delete_action:
             {
+                ArrayList<Integer> toDelete = new ArrayList<Integer>();
                 //delete the notes which have been selected
-                for (int i = 0; i < FileManager.getNumNotes(NotesList.this); ++i){
-                    if (ActionModeMonitor.getActivated(i)){
-                        FileManager.deleteFile(NotesList.this, i);
-                        notesListRecyclerViewAdapter.notifyItemRemoved(i);
+                for (int i = 0; i < FileManager.getNumNotes(NotesList.this); ++i) {
+                    if (ActionModeMonitor.getActivated(i)) {
+                        ActionModeMonitor.deleteActivated(i);
                         NoteManager.deleteNoteState(NotesList.this, i);
+                        FileManager.deleteFile(NotesList.this,i);
+                        notesListRecyclerViewAdapter.notifyItemRemoved(i);
                     }
                 }
                 return true;
@@ -163,10 +169,11 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-//        int count = FileManager.getNumNotes(NotesList.this);
-//        for (int i = 0; i < count; ++i){
-//            ActionModeMonitor.setActivated(i, false);
-//        }
+        for (int i = 0; i < notesList.getAdapter().getItemCount(); ++i){
+            ActionModeMonitor.setActivated(i, false);
+        }
+        ActionModeMonitor.setSelected(false);
+        notesList.getAdapter().notifyDataSetChanged();
     }
 
     @Override

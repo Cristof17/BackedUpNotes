@@ -89,7 +89,7 @@ public class NewNoteActivity extends AppCompatActivity {
                 setResult(RESULT_CANCELED);
             }
         }
-    }
+     }
 
     @Override
     protected void onDestroy() {

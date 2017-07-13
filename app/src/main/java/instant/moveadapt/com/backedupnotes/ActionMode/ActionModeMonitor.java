@@ -27,20 +27,12 @@ public class ActionModeMonitor {
 
     public static void setActivated(int position, boolean selected){
         selectedItems.set(position, selected);
-        //first element
-        if (!hasItemAlreadySelected){
-            if(selected)
-                hasItemAlreadySelected = true;
-        } else {
-            boolean foundAtLeasOneTrue = false;
-            for (Boolean b : selectedItems){
-                if (b == true){
-                    foundAtLeasOneTrue = true; //just for code undestanding
-                    return;
-                }
-            }
-            if (!foundAtLeasOneTrue)
-                hasItemAlreadySelected = false;
+    }
+
+    public static void deleteActivated(int position){
+        if (selectedItems != null){
+            selectedItems.set(position, false);
+            selectedItems.remove(position);
         }
     }
 
@@ -48,21 +40,24 @@ public class ActionModeMonitor {
         return hasItemAlreadySelected;
     }
 
-    public static void expandToSize(int newSize){
-
-        ArrayList<Boolean> newArrayList = new ArrayList<Boolean>(newSize);
-        for (int i = 0; i < newSize; ++i)
-            newArrayList.add(false);
-        if (selectedItems != null){
-            for (int i = 0; i < newSize; ++i){
-                newArrayList.set(i, selectedItems.get(i));
-            }
-        }
-        selectedItems = null;
-        selectedItems = newArrayList;
+    public static boolean getActivated(int position){
+        if (selectedItems.size() > 0)
+            return selectedItems.get(position);
+        return false;
     }
 
-    public static boolean getActivated(int position){
-        return selectedItems.get(position);
+    public static void setSelected(boolean hasItemAlreadySelected){
+        ActionModeMonitor.hasItemAlreadySelected = hasItemAlreadySelected;
+    }
+
+    public static void refreshSize(int newSize){
+        ArrayList<Boolean> newSelectedItems = new ArrayList<Boolean>();
+        for (int i = 0; i < newSize; ++i){
+            newSelectedItems.add(false);
+        }
+
+        for (int i = 0; i < selectedItems.size(); ++i){
+            newSelectedItems.set(i, selectedItems.get(i));
+        }
     }
 }
