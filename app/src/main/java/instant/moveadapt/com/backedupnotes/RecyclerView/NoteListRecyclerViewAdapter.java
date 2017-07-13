@@ -71,8 +71,8 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             if (!actionModeMonitor.isSelected()){
                 activity.startActionMode(actionModeCallback);
             }
-            actionModeMonitor.setActivated(longClickAdapterPosition, true);
             notifyDataSetChanged();
+            actionModeMonitor.setActivated(longClickAdapterPosition, true);
             Toast.makeText(context, "Position " + longClickAdapterPosition + " activated " + actionModeMonitor.getActivated(longClickAdapterPosition), Toast.LENGTH_LONG).show();
         }
         //this callback consumed the event return true

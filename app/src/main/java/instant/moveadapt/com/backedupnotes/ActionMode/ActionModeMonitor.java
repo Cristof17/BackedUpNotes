@@ -26,7 +26,8 @@ public class ActionModeMonitor {
     }
 
     public static void setActivated(int position, boolean selected){
-        selectedItems.set(position, selected);
+        if (selectedItems.size() != 0)
+            selectedItems.set(position, selected);
     }
 
     public static void deleteActivated(int position){
@@ -52,6 +53,7 @@ public class ActionModeMonitor {
 
     public static void refreshSize(int newSize){
         ArrayList<Boolean> newSelectedItems = new ArrayList<Boolean>();
+
         for (int i = 0; i < newSize; ++i){
             newSelectedItems.add(false);
         }
@@ -59,5 +61,7 @@ public class ActionModeMonitor {
         for (int i = 0; i < selectedItems.size(); ++i){
             newSelectedItems.set(i, selectedItems.get(i));
         }
+        selectedItems = null;
+        selectedItems = newSelectedItems;
     }
 }

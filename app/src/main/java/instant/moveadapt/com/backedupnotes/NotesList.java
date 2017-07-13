@@ -90,7 +90,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == NEW_NOTE_REQUEST_CODE){
             if (resultCode == RESULT_OK){
-                PreferenceManager.addState(NotesList.this, Constants.STATE_LOCAL);
+                NoteManager.addNoteState(NotesList.this, Constants.STATE_LOCAL);
             } else if (resultCode == RESULT_CANCELED){
                 //do nothing
             }
@@ -158,6 +158,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                         NoteManager.deleteNoteState(NotesList.this, i);
                         FileManager.deleteFile(NotesList.this,i);
                         notesListRecyclerViewAdapter.notifyItemRemoved(i);
+                        --i;
                     }
                 }
                 return true;
