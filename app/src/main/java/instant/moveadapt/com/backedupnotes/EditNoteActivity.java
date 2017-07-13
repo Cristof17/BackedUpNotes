@@ -1,7 +1,8 @@
-package instant.moveadapt.com.backedupnotes.RecyclerView;
+package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,8 +16,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.Permission;
@@ -30,13 +34,15 @@ import instant.moveadapt.com.backedupnotes.R;
  * Created by cristof on 13.06.2017.
  */
 
-public class NewNoteActivity extends AppCompatActivity {
+public class EditNoteActivity extends AppCompatActivity {
 
-    public static final String TAG = "[NEW_NOTE_ACTIVITY]";
+    public static final String TAG = "[EDIT_NOTE_ACTIVITY]";
 
     private Toolbar toolbar;
     private EditText editText;
-    private File newNoteFile;
+    private File file;
+    private Intent intent;
+    private int position;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,13 +52,33 @@ public class NewNoteActivity extends AppCompatActivity {
         toolbar = (Toolbar)findViewById(R.id.new_note_toolbar);
         editText = (EditText)findViewById(R.id.new_note_edit_text);
 
-        newNoteFile = FileManager.createNewNoteFile(NewNoteActivity.this);
-        newNoteFile.setReadable(true);
-        newNoteFile.setWritable(true);
+        if ((intent = getIntent()) != null){
+            position = intent.getIntExtra(Constants.INTENT_EDIT_FILE_POSITION, -1);
+            if (position == -1){
+                String message = getResources().getString(R.string.cannot_edit_note);
+                Toast.makeText(EditNoteActivity.this, message, Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                file = FileManager.getFileForIndex(EditNoteActivity.this, position);
+                StringBuilder noteString = new StringBuilder();
+                try {
+                    BufferedReader fileReader = new BufferedReader(new FileReader(file));
+                    String line;
+                    while ((line = fileReader.readLine()) != null){
+                        noteString.append(line);
+                    }
+                    editText.setText(noteString.toString());
 
+                }catch (FileNotFoundException e){
+                    e.printStackTrace();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }
 
-        if (ContextCompat.checkSelfPermission(NewNoteActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(NewNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.READ_WRITE_PERMISSION_REQ_CODE);
+        if (ContextCompat.checkSelfPermission(EditNoteActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(EditNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.READ_WRITE_PERMISSION_REQ_CODE);
         }
 
     }
@@ -64,26 +90,24 @@ public class NewNoteActivity extends AppCompatActivity {
         /*
             Save the note
          */
-        if (newNoteFile != null){
+        if (file != null){
             if (editText.getText().toString() != null && !editText.getText().toString().equals("")) {
                 try {
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(newNoteFile));
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                     if (editText != null) {
                         writer.write(editText.getText().toString());
                     }
                     writer.flush();
                     writer.close();
-                    setResult(RESULT_OK);
                     Log.d(TAG, "Text written in file");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
-                newNoteFile.delete();
-                setResult(RESULT_CANCELED);
+                file.delete();
             }
         }
-     }
+    }
 
     @Override
     protected void onDestroy() {

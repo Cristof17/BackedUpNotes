@@ -21,6 +21,7 @@
         android:layout_margin="10dp"
         android:id="@+id/note_list_item_text_view"
         android:text="@string/new_note_hint"
+        android:ellipsize="end"
         android:singleLine="true"
         android:textSize="20sp"
         android:typeface="monospace"/>

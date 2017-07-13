@@ -14,4 +14,6 @@ public class Constants {
     public static final int STATE_LOCAL = 0;
     public static final int STATE_GLOBAL = 1;
 
+    public static final String INTENT_EDIT_FILE_POSITION = "intent_edit_file_position";
+
 }

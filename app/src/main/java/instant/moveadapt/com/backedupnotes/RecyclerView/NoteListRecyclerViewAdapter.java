@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes.RecyclerView;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.view.ActionMode;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 
 import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Constants;
+import instant.moveadapt.com.backedupnotes.EditNoteActivity;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
 import instant.moveadapt.com.backedupnotes.R;
@@ -88,6 +90,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                 boolean activated = actionModeMonitor.getActivated(position);
             } else {
                 //edit note activity
+                View rootView = recyclerView.findContainingItemView(v);
+                int viewPosition = recyclerView.getChildAdapterPosition(rootView);
+                Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
+                editNoteIntent.putExtra(Constants.INTENT_EDIT_FILE_POSITION, viewPosition);
+                context.startActivity(editNoteIntent);
             }
             notifyDataSetChanged();
         }
@@ -116,15 +123,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                 BufferedReader reader = new BufferedReader(new FileReader(noteFile));
                 String firstLine = reader.readLine();
                 if (firstLine != null && !firstLine.equals("")){
-                    String first10Chars;
-                    if (firstLine.length() >= 10) {
-                        first10Chars = firstLine.substring(0, 9);
-                        tv.setText(first10Chars + "..");
-                    } else {
-                        first10Chars = firstLine;
-                        tv.setText(first10Chars);
-                    }
-
+                    tv.setText(firstLine);
                     Resources resources = context.getResources();
                     if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_LOCAL){
                         tv.setTextColor(Color.parseColor("#990000"));

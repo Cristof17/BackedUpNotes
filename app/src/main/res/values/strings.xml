@@ -10,4 +10,5 @@
     <string name="note_unknown_title">Nothing written</string>
     <string name="backup">Backup</string>
     <string name="delete">Delete</string>
+    <string name="cannot_edit_note">Cannot edit note</string>
 </resources>
