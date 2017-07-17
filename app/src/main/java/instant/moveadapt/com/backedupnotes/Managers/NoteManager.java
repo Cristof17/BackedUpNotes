@@ -1,6 +1,7 @@
 package instant.moveadapt.com.backedupnotes.Managers;
 
 import android.content.Context;
+import android.net.Uri;
 import android.preference.*;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -71,4 +72,45 @@ public class NoteManager {
             NoteManager.setNoteState(context, fileIndex, newState);
         }
     }
+
+    public static Uri getUploadUriByFilename(Context context, String filename){
+        Uri returnUri = null;
+        if (filename != null && !filename.equals("")){
+            returnUri = PreferenceManager.getIncompleteUploadUriByFilename(context, filename);
+        }
+        return returnUri;
+    }
+
+    public static void completeUploadByFilename(Context context, String filename){
+        if (filename != null && !filename.equals("")){
+            PreferenceManager.deleteIncompleteUploadUriByFilename(context, filename);
+        }
+    }
+
+    public static void setUriByFilename(Context context, String filename, Uri uri){
+        if (filename != null && !filename.equals("")) {
+            PreferenceManager.addUploadUriForFilename(context, filename, uri);
+        }
+    }
+
+    public static void addToBeDeletedFromCloud(Context context, String filename){
+        if (filename != null && !filename.equals("")){
+            PreferenceManager.addToBeDeletedFileFromCloud(context, filename);
+        }
+    }
+
+    public static void removeToBeDeletedFromCloud(Context context, String filename){
+        if (filename != null && !filename.equals("")){
+            PreferenceManager.removeFromToBeDeletedFromCloud(context, filename);
+        }
+    }
+
+    public static boolean isToBeDeletedFromCloud(Context context, String filename){
+        boolean returnVal = false;
+        if (filename != null && !filename.equals("")){
+            return PreferenceManager.isToBeDeletedFromCloud(context,filename);
+        }
+        return false;
+    }
+
 }

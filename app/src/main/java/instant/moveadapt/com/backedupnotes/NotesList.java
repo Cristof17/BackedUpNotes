@@ -2,7 +2,9 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
@@ -186,7 +188,14 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                     if (ActionModeMonitor.getActivated(i)) {
                         ActionModeMonitor.deleteActivated(i);
                         NoteManager.deleteNoteState(NotesList.this, i);
+                        File toBeDeleted = FileManager.getFileForIndex(NotesList.this, i);
                         FileManager.deleteFile(NotesList.this,i);
+                        ConnectivityManager connectionManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                        if (connectionManager.getActiveNetworkInfo() != null){
+                            deleteCloudFile(toBeDeleted.getName());
+                        } else {
+                            NoteManager.addToBeDeletedFromCloud(NotesList.this, toBeDeleted.getName());
+                        }
                         notesListRecyclerViewAdapter.notifyItemRemoved(i);
                         --i;
                     }
@@ -287,12 +296,13 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                     if (states != null){
                         if (states.get(fileIndex) == Constants.STATE_LOCAL){
                             StorageMetadata.Builder storageMetadataBuilder = new StorageMetadata.Builder();
+                            storageMetadataBuilder.setContentType("text/plain");
                             StorageMetadata defaultMetadata = storageMetadataBuilder.build();
                             Uri.Builder builder = new Uri.Builder();
                             builder.scheme("file");
                             builder.encodedPath(f.getPath());
                             Log.d(TAG, "Uri = " + builder.build().toString());
-                            StorageReference remoteFile = parentFolder.child(Constants.REMOTE_NOTE_FOLDER + File.pathSeparator + f.getName());
+                            StorageReference remoteFile = parentFolder.child(f.getName());
                             UploadTask uploadFileTask = remoteFile.putFile(builder.build(), defaultMetadata);
                             uploadFileTask.addOnFailureListener(new OnFailureListener(){
                                 @Override
@@ -309,14 +319,25 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                                     if (taskSnapshot != null){
                                         storageMetadata = taskSnapshot.getMetadata();
                                     }
-                                    if (fileIndex == files.length) {
-                                        fileIndex--;
-                                    }
                                     if (storageMetadata != null) {
-                                        String filename = storageMetadata.getName().substring(Constants.NOTES_FOLDER.length() + 1, storageMetadata.getName().length());
+                                        String filename = storageMetadata.getName();
                                         Log.d(TAG, "Successfully uploaded " + filename);
                                         NoteManager.setNoteStateByName(NotesList.this, filename, Constants.STATE_GLOBAL);
+                                        NoteManager.completeUploadByFilename(NotesList.this, filename);
                                         notesList.getAdapter().notifyDataSetChanged();
+                                    }
+                                }
+                            });
+
+                            uploadFileTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>(){
+                                @Override
+                                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                                    String filename = taskSnapshot.getMetadata().getName();
+                                    Uri incompleteUri = taskSnapshot.getUploadSessionUri();
+                                    if (NoteManager.getUploadUriByFilename(NotesList.this, filename) != null){
+                                        //do nothing
+                                    } else {
+                                        NoteManager.setUriByFilename(NotesList.this, filename, incompleteUri);
                                     }
                                 }
                             });
@@ -328,6 +349,30 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 }
             }
         }
+    }
+
+    public void deleteCloudFile(final String filename) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference bucket = storage.getReference();
+        StorageReference notesFolder = bucket.child(Constants.REMOTE_NOTE_FOLDER);
+        final StorageReference fileToBeDeletedRefernce = notesFolder.child(filename);
+        int index = FileManager.getFileIndexByName(NotesList.this, filename);
+        Task deleteTask = fileToBeDeletedRefernce.delete();
+        deleteTask.addOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) {
+                //do nothing
+                Log.d(TAG, "Deleted " + filename + " from cloud");
+            }
+        });
+        deleteTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                StorageException exception = (StorageException) e;
+                handleTaskException(exception);
+
+            }
+        });
     }
 
     public void handleTaskException(StorageException storageException){

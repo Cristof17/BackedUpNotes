@@ -7,8 +7,11 @@ import android.net.Uri;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import instant.moveadapt.com.backedupnotes.Constants;
 
@@ -112,4 +115,105 @@ public class PreferenceManager {
     }
 
 
+    public static void addUploadUriForFilename(Context context, String filename, Uri uri){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        Type hashMapType = new TypeToken<HashMap<String, String>>(){}.getType();
+        String incompleteUploadsJSON = prefs.getString(Constants.PREFERENCE_INCOMPLETE_UPLOADS, "");
+        HashMap<String, String> incompleteUploads = gson.fromJson(incompleteUploadsJSON, hashMapType);
+        if (incompleteUploadsJSON != null && !incompleteUploadsJSON.equals("")){
+            if (incompleteUploads != null){
+                incompleteUploads.put(filename, uri.toString());
+            }
+            incompleteUploadsJSON = gson.toJson(incompleteUploads);
+        } else {
+            incompleteUploads = new HashMap<String, String>();
+            incompleteUploads.put(filename, uri.toString());
+        }
+        incompleteUploadsJSON = gson.toJson(incompleteUploads);
+        editor.putString(Constants.PREFERENCE_INCOMPLETE_UPLOADS, incompleteUploadsJSON);
+        editor.commit();
+    }
+
+    public static Uri getIncompleteUploadUriByFilename(Context context, String filename){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        String incompleteUploadsJSON = prefs.getString(Constants.PREFERENCE_INCOMPLETE_UPLOADS, "");
+        Uri returnUri = null;
+        Gson gson = new Gson();
+        if (incompleteUploadsJSON != null && !incompleteUploadsJSON.equals("")){
+            Type hashMapType = new TypeToken<HashMap<String, String>>(){}.getType();
+            HashMap<String, String> incompleteUploads = gson.fromJson(incompleteUploadsJSON, hashMapType);
+            if (incompleteUploads != null){
+                String uriString = incompleteUploads.get(filename);
+                if (uriString != null && !uriString.equals("")){
+                    returnUri = Uri.parse(uriString);
+                }
+            }
+        }
+        return returnUri;
+    }
+
+    public static void deleteIncompleteUploadUriByFilename(Context context, String filename){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        String incompleteUploadsJSON = prefs.getString(Constants.PREFERENCE_INCOMPLETE_UPLOADS, "");
+        if (incompleteUploadsJSON != null && !incompleteUploadsJSON.equals("")){
+            Type hashMapType = new TypeToken<HashMap<String, String>>(){}.getType();
+            HashMap<String, String> incompleteUploads = gson.fromJson(incompleteUploadsJSON, hashMapType);
+            incompleteUploads.remove(filename);
+            incompleteUploadsJSON = gson.toJson(incompleteUploads);
+            editor.putString(Constants.PREFERENCE_INCOMPLETE_UPLOADS, incompleteUploadsJSON);
+            editor.commit();
+        }
+    }
+
+    public static void addToBeDeletedFileFromCloud(Context context, String filename){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        String toBeDeletedListJson = prefs.getString(Constants.PREFERENCE_TO_BE_DELETED, "");
+        if (toBeDeletedListJson != null && !toBeDeletedListJson.equals("")){
+            Type arrayListType = new TypeToken<ArrayList<String>>(){}.getType();
+            ArrayList<String> toBeDeletedList = gson.fromJson(toBeDeletedListJson, arrayListType);
+            toBeDeletedList.add(filename);
+            toBeDeletedListJson = gson.toJson(toBeDeletedList);
+
+        } else {
+            ArrayList<String> toBeDeletedList = new ArrayList<String>();
+            toBeDeletedListJson = gson.toJson(toBeDeletedList);
+        }
+        editor.putString(Constants.PREFERENCE_TO_BE_DELETED, toBeDeletedListJson);
+        editor.commit();
+    }
+
+    public static void removeFromToBeDeletedFromCloud(Context context, String filename){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        Type arrayListType = new TypeToken<ArrayList<String>>(){}.getType();
+        String toBeDeletedJSON = prefs.getString(Constants.PREFERENCE_TO_BE_DELETED, "");
+        if (toBeDeletedJSON != null && toBeDeletedJSON.equals("")) {
+            ArrayList<String> toBeDeleted = gson.fromJson(toBeDeletedJSON, arrayListType);
+            toBeDeleted.remove(filename);
+            toBeDeletedJSON = gson.toJson(toBeDeleted);
+            editor.putString(Constants.PREFERENCE_TO_BE_DELETED, toBeDeletedJSON);
+            editor.commit();
+        }
+    }
+
+    public static boolean isToBeDeletedFromCloud(Context context, String filename){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        Gson gson = new Gson();
+        Type arrayListType = new TypeToken<ArrayList<String>>(){}.getType();
+        String toBeDeletedJSON = prefs.getString(Constants.PREFERENCE_TO_BE_DELETED, "");
+        if (toBeDeletedJSON != null && toBeDeletedJSON.equals("")) {
+            ArrayList<String> toBeDeleted = gson.fromJson(toBeDeletedJSON, arrayListType);
+            if (toBeDeleted.contains(filename))
+                return true;
+        }
+        return false;
+    }
 }
