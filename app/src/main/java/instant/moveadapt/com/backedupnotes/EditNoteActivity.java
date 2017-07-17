@@ -2,8 +2,10 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,6 +17,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageException;
+import com.google.firebase.storage.StorageReference;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,7 +37,9 @@ import java.security.Permission;
 import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
+import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.R;
+import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
 
 /**
  * Created by cristof on 13.06.2017.
@@ -99,7 +110,6 @@ public class EditNoteActivity extends AppCompatActivity {
                     }
                     writer.flush();
                     writer.close();
-                    NoteManager.setNoteState(EditNoteActivity.this, position, Constants.STATE_LOCAL);
                     Log.d(TAG, "Text written in file");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -107,6 +117,31 @@ public class EditNoteActivity extends AppCompatActivity {
             } else {
                 file.delete();
             }
+
+            ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager.getActiveNetworkInfo() != null && NoteManager.getNoteStateForIndex(EditNoteActivity.this, position) == Constants.STATE_GLOBAL){
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference bucket = storage.getReference();
+                StorageReference notesFolder = bucket.child(Constants.REMOTE_NOTE_FOLDER);
+                StorageReference toBeDeletedFile = notesFolder.child(file.getName());
+                Task deleteTask = toBeDeletedFile.delete();
+                deleteTask.addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        Log.d(TAG, "Deleted successfully " + file.getName());
+                    }
+                });
+                deleteTask.addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        handleTaskException((StorageException)e);
+                    }
+                });
+
+            } else {
+                NoteManager.addToBeDeletedFromCloud(EditNoteActivity.this, file.getName());
+            }
+            NoteManager.setNoteState(EditNoteActivity.this, position, Constants.STATE_LOCAL);
         }
     }
 
@@ -131,6 +166,36 @@ public class EditNoteActivity extends AppCompatActivity {
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");
             } else {
                 Log.d(TAG, "Permission for rd/wr to external storage is denied");
+            }
+        }
+    }
+
+    public void handleTaskException(StorageException storageException){
+        switch (storageException.getErrorCode()) {
+            case StorageException.ERROR_BUCKET_NOT_FOUND: {
+                Toast.makeText(EditNoteActivity.this, "Bucket not found", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "Bucket not found");
+                break;
+            }
+            case StorageException.ERROR_NOT_AUTHORIZED: {
+                Toast.makeText(EditNoteActivity.this, "Not authorized to access the server folder", Toast.LENGTH_LONG).show();
+                Log.d(TAG,"Not authorized to access the server folder");
+                break;
+            }
+            case StorageException.ERROR_UNKNOWN: {
+                Toast.makeText(EditNoteActivity.this, "An unknown error occured", Toast.LENGTH_LONG).show();
+                Log.d(TAG,"An unknown error occured");
+                break;
+            }
+            case StorageException.ERROR_OBJECT_NOT_FOUND: {
+                Toast.makeText(EditNoteActivity.this, "Server folder does not exist", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "Server folder does not exist");
+                break;
+            }
+            case StorageException.ERROR_PROJECT_NOT_FOUND: {
+                Toast.makeText(EditNoteActivity.this, "Remote server project not found", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "Remote server project not found");
+                break;
             }
         }
     }
