@@ -9,6 +9,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -48,6 +51,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
@@ -58,7 +62,6 @@ import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdap
 
 public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
-    private static final int NEW_NOTE_REQUEST_CODE = 100;
     private static final int INTERNET_PERMISSION_REQUEST_CODE = 101;
 
     private FloatingActionButton addButton;
@@ -70,7 +73,9 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     private LinearLayoutManager llm;
     private static final String TAG = "[NOTE_LIST]";
 
-    StorageMetadata returnMetadata;
+    private StorageMetadata returnMetadata;
+    private int fileIndex = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,7 +103,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), NewNoteActivity.class);
-                startActivityForResult(intent, NEW_NOTE_REQUEST_CODE);
+                startActivity(intent);
             }
         });
 
@@ -107,18 +112,6 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         notesList.setAdapter(notesListRecyclerViewAdapter);
         notesList.setLayoutManager(llm);
         notesList.setItemAnimator(new DefaultItemAnimator());
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == NEW_NOTE_REQUEST_CODE){
-            if (resultCode == RESULT_OK){
-                NoteManager.addNoteState(NotesList.this, Constants.STATE_LOCAL);
-            } else if (resultCode == RESULT_CANCELED){
-                //do nothing
-            }
-        }
     }
 
     @Override
@@ -222,7 +215,6 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 final FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference bucket = storage.getReference();
                 StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
-                getMetadataForReference(notite);
                 uploadFiles(notite);
             }
             break;
@@ -237,76 +229,128 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         errorTextView.setText(getResources().getString(R.string.permission_error_text));
     }
 
-    public void getMetadataForReference(final StorageReference storageReference){
-        Task<StorageMetadata> notiteTask = storageReference.getMetadata();
-        notiteTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                StorageException storageException = ((StorageException) e);
-                switch (storageException.getErrorCode()) {
-                    case StorageException.ERROR_BUCKET_NOT_FOUND: {
-                        Toast.makeText(NotesList.this, "Bucket not found", Toast.LENGTH_LONG).show();
-                        break;
-                    }
-                    case StorageException.ERROR_NOT_AUTHORIZED: {
-                        Toast.makeText(NotesList.this, "Not authorized to access the server folder", Toast.LENGTH_LONG).show();
-                        break;
-                    }
-                    case StorageException.ERROR_UNKNOWN: {
-                        Toast.makeText(NotesList.this, "An unknown error occured", Toast.LENGTH_LONG).show();
-                        break;
-                    }
-                    case StorageException.ERROR_OBJECT_NOT_FOUND: {
-                        Toast.makeText(NotesList.this, "Server folder does not exist", Toast.LENGTH_LONG).show();
-                        break;
-                    }
-                    case StorageException.ERROR_PROJECT_NOT_FOUND: {
-                        Toast.makeText(NotesList.this, "Remote server project not found", Toast.LENGTH_LONG).show();
-                        break;
-                    }
-                }
-            }
-
-        });
-        notiteTask.addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
-            @Override
-            public void onSuccess(StorageMetadata storageMetadata) {
-                Toast.makeText(NotesList.this, "Received metadata for remote folder successfully", Toast.LENGTH_LONG).show();
-                returnMetadata = storageMetadata;
-            }
-        });
-    }
-
-    public void uploadFiles(StorageReference folder){
-        if (folder != null){
-            File[] files = FileManager.getFiles(NotesList.this);
+    public void uploadFiles(StorageReference parentFolder){
+        final ArrayList<Integer> completedPositions = new ArrayList<Integer>();
+        HashMap<File, Uri> filesPendingToBeUploaded = new HashMap<File, Uri>();
+        ArrayList<Integer> states = PreferenceManager.getNotesStates(NotesList.this);
+        if (parentFolder != null){
+            final File[] files = FileManager.getFiles(NotesList.this);
             if (Build.VERSION.SDK_INT >= 23){
                 String[] permissions = new String[]{Manifest.permission.ACCESS_NETWORK_STATE};
                 if (ActivityCompat.checkSelfPermission(NotesList.this, Manifest.permission.ACCESS_NETWORK_STATE) != PermissionChecker.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(NotesList.this, permissions, INTERNET_PERMISSION_REQUEST_CODE);
                 }
             }
-            for (File f : files) {
+
+            /*
+                Get the number of files
+             */
+            int numFiles = 0;
+            for (File f : files){
+                numFiles++;
+            }
+
+            /*
+                Show not connected message
+             */
+            ConnectivityManager manager = (ConnectivityManager)getSystemService(Service.CONNECTIVITY_SERVICE);
+            if (manager != null){
+                NetworkInfo info;
+                if ((info = manager.getActiveNetworkInfo()) != null){
+                    Log.d(TAG, "Connected to network with Info = " + info.getTypeName());
+                } else {
+                    AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesList.this);
+                    Resources resources = getResources();
+                    String title = resources.getString(R.string.no_internet_connection_title);
+                    String message = resources.getString(R.string.no_internet_connection);
+                    String ok_button = resources.getString(R.string.no_internet_connection_ok_button);
+                    alertBuilder.setTitle(title);
+                    alertBuilder.setMessage(message);
+                    alertBuilder.setPositiveButton(ok_button, null);
+                    alertBuilder.create().show();
+                    return;
+                }
+            }
+
+            /*
+                Send the files
+             */
+
+            for (fileIndex = 0; fileIndex < files.length; ++fileIndex){
+                final File f = files[fileIndex];
                 try {
                     Log.d(TAG, "File " + f.getCanonicalPath() + " has size " + f.length());
                     /*
                         Check if connected to the internet
                      */
-                    ConnectivityManager manager = (ConnectivityManager)getSystemService(Service.CONNECTIVITY_SERVICE);
-                    if (manager != null){
-                        NetworkInfo info;
-                        if ((info = manager.getActiveNetworkInfo()) != null){
-                            Log.d(TAG, "Info = " + info.getTypeName());
-                        } else {
-                            Intent intent = new Intent(Intent.ACTION_MAIN);
-                            intent.setClassName("com.android.phone","com.android.phone.ERROR_UNKNOWN");
-                            startActivity(intent);
+
+                    if (states != null){
+                        if (states.get(fileIndex) == Constants.STATE_LOCAL){
+                            StorageMetadata.Builder storageMetadataBuilder = new StorageMetadata.Builder();
+                            StorageMetadata defaultMetadata = storageMetadataBuilder.build();
+                            Uri.Builder builder = new Uri.Builder();
+                            builder.scheme("file");
+                            builder.encodedPath(f.getPath());
+                            Log.d(TAG, "Uri = " + builder.build().toString());
+                            StorageReference remoteFile = parentFolder.child(Constants.REMOTE_NOTE_FOLDER + File.pathSeparator + f.getName());
+                            UploadTask uploadFileTask = remoteFile.putFile(builder.build(), defaultMetadata);
+                            uploadFileTask.addOnFailureListener(new OnFailureListener(){
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    StorageException storageException = (StorageException)e;
+                                    handleTaskException(storageException);
+                                }
+                            });
+                            uploadFileTask.addOnSuccessListener(new OnSuccessListener(){
+                                @Override
+                                public void onSuccess(Object o) {
+                                    UploadTask.TaskSnapshot taskSnapshot = (UploadTask.TaskSnapshot)o;
+                                    StorageMetadata storageMetadata = null;
+                                    if (taskSnapshot != null){
+                                        storageMetadata = taskSnapshot.getMetadata();
+                                    }
+                                    if (fileIndex == files.length) {
+                                        fileIndex--;
+                                    }
+                                    if (storageMetadata != null) {
+                                        String filename = storageMetadata.getName().substring(Constants.NOTES_FOLDER.length() + 1, storageMetadata.getName().length());
+                                        Log.d(TAG, "Successfully uploaded " + filename);
+                                        NoteManager.setNoteStateByName(NotesList.this, filename, Constants.STATE_GLOBAL);
+                                        notesList.getAdapter().notifyDataSetChanged();
+                                    }
+                                }
+                            });
                         }
                     }
 
                 }catch (IOException e){
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public void handleTaskException(StorageException storageException){
+        switch (storageException.getErrorCode()) {
+            case StorageException.ERROR_BUCKET_NOT_FOUND: {
+                Toast.makeText(NotesList.this, "Bucket not found", Toast.LENGTH_LONG).show();
+                break;
+            }
+            case StorageException.ERROR_NOT_AUTHORIZED: {
+                Toast.makeText(NotesList.this, "Not authorized to access the server folder", Toast.LENGTH_LONG).show();
+                break;
+            }
+            case StorageException.ERROR_UNKNOWN: {
+                Toast.makeText(NotesList.this, "An unknown error occured", Toast.LENGTH_LONG).show();
+                break;
+            }
+            case StorageException.ERROR_OBJECT_NOT_FOUND: {
+                Toast.makeText(NotesList.this, "Server folder does not exist", Toast.LENGTH_LONG).show();
+                break;
+            }
+            case StorageException.ERROR_PROJECT_NOT_FOUND: {
+                Toast.makeText(NotesList.this, "Remote server project not found", Toast.LENGTH_LONG).show();
+                break;
             }
         }
     }

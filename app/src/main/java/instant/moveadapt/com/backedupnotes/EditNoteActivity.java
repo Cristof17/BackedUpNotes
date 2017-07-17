@@ -99,6 +99,7 @@ public class EditNoteActivity extends AppCompatActivity {
                     }
                     writer.flush();
                     writer.close();
+                    NoteManager.setNoteState(EditNoteActivity.this, position, Constants.STATE_LOCAL);
                     Log.d(TAG, "Text written in file");
                 } catch (IOException e) {
                     e.printStackTrace();

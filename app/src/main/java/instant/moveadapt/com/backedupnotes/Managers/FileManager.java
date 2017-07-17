@@ -21,7 +21,6 @@ public class FileManager {
 
     public static File createNotesFolder(Context context){
         File dir = context.getFilesDir();
-        Log.d(TAG, "External storage dir = " + dir.getAbsolutePath());
         File notesFolder = new File(dir, Constants.NOTES_FOLDER);
         if (!notesFolder.exists()){
             boolean created = notesFolder.mkdir();
@@ -80,5 +79,18 @@ public class FileManager {
         File dir = createNotesFolder(context);
         File[] files = dir.listFiles();
         files[position].delete();
+    }
+
+    public static int getFileIndexByName(Context context, String name){
+        File[] files = FileManager.getFiles(context);
+        if (files != null){
+            for (int i =0 ; i < files.length; ++i){
+                File currentFile = files[i];
+                if (currentFile.getName().equals(name)){
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 }

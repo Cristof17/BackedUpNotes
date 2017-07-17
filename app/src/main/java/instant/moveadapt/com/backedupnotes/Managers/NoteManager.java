@@ -64,4 +64,11 @@ public class NoteManager {
         addNoteState(context, Constants.STATE_LOCAL);
         return newNote;
     }
+
+    public static void setNoteStateByName(Context context, String name, int newState){
+        int fileIndex = FileManager.getFileIndexByName(context, name);
+        if (fileIndex != -1){
+            NoteManager.setNoteState(context, fileIndex, newState);
+        }
+    }
 }

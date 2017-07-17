@@ -13,4 +13,9 @@
     <string name="cannot_edit_note">Cannot edit note</string>
     <string name="cannot_upload_warning">Cannot backup notes because you have not granted permission to the internet. To change this change the permissions from the settings menu or reinstall the app</string>
     <string name="permission_granted_message">You can now backup your notes</string>
+    <string name="no_internet_connection">There is no internet connection</string>
+    <string name="no_internet_connection_title">Hold on pal</string>
+    <string name="no_internet_connection_ok_button">Got it</string>
+    <string name="upload_files_text">Files uploaded</string>
+    <string name="upload_per_file_text">Bytes from currentFile</string>
 </resources>

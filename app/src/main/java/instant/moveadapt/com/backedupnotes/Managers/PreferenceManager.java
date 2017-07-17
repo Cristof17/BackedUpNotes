@@ -81,6 +81,13 @@ public class PreferenceManager {
             statesString = gson.toJson(states);
             editor.putString(Constants.PREFERENCE_NOTES_STATES, statesString);
             editor.commit();
+        } else {
+            ArrayList<Integer> states = new ArrayList<Integer>();
+            states.add(newState);
+            String statesJSON = gson.toJson(states);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(Constants.PREFERENCE_NOTES_STATES, statesJSON);
+            editor.commit();
         }
     }
 

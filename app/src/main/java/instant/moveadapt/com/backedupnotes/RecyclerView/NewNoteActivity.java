@@ -24,6 +24,7 @@ import java.security.Permission;
 import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
+import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.R;
 
 /**
@@ -73,6 +74,7 @@ public class NewNoteActivity extends AppCompatActivity {
                     }
                     writer.flush();
                     writer.close();
+                    NoteManager.addNoteState(NewNoteActivity.this, Constants.STATE_LOCAL);
                     setResult(RESULT_OK);
                     Log.d(TAG, "Text written in file");
                 } catch (IOException e) {
