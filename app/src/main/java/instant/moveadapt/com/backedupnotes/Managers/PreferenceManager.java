@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes.Managers;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -81,6 +82,26 @@ public class PreferenceManager {
             editor.putString(Constants.PREFERENCE_NOTES_STATES, statesString);
             editor.commit();
         }
+    }
+
+    public static void setRemoteFolderCreationURI(Context context, Uri remoteUri) {
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        if (remoteUri != null)
+            editor.putString(Constants.PREFERENCE_NOTE_FOLDER_SESSION_URI, remoteUri.toString());
+        else
+            editor.putString(Constants.PREFERENCE_NOTE_FOLDER_SESSION_URI, "");
+        editor.commit();
+    }
+
+    public static Uri getRemoteFolderCreationUri(Context context){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        String uriString = prefs.getString(Constants.PREFERENCE_NOTE_FOLDER_SESSION_URI, "");
+        Uri sessionUri = null;
+        if (uriString != null && (!uriString.equals(""))){
+            sessionUri = Uri.parse(uriString);
+        }
+        return sessionUri;
     }
 
 

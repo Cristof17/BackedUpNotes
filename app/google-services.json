@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "639147305563",
+    "firebase_url": "https://backedupnotes-3daf3.firebaseio.com",
+    "project_id": "backedupnotes-3daf3",
+    "storage_bucket": "backedupnotes-3daf3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639147305563:android:a1899a8e1a5a9399",
+        "android_client_info": {
+          "package_name": "instant.moveadapt.com.backedupnotes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639147305563-54nml95pc6p7o72hl96m5scmckmfrc50.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDhLBvxZ6NaOyy6xkh48hnCI3RpBLvAGQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
