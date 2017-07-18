@@ -72,7 +72,7 @@ public class EditNoteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_new_note_layout);
         toolbar = (Toolbar)findViewById(R.id.new_note_toolbar);
         editText = (EditText)findViewById(R.id.new_note_edit_text);
-        
+
         if ((intent = getIntent()) != null){
             position = intent.getIntExtra(Constants.INTENT_EDIT_FILE_POSITION, -1);
             if (position == -1){
@@ -114,28 +114,9 @@ public class EditNoteActivity extends AppCompatActivity {
          */
         if (file != null){
             if (editText.getText().toString() != null && !editText.getText().toString().equals("")) {
-//                try {
-//                    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-//                    if (editText != null) {
-//                        writer.write(editText.getText().toString());
-//                    }
-//                    writer.flush();
-//                    writer.close();
-//                    Log.d(TAG, "Text written in file");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
                 Resources resources = getResources();
                 String title = resources.getString(R.string.save_file_progress_title);
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(EditNoteActivity.this);
-                alertDialogBuilder.setTitle(title);
-                LayoutInflater inflater = (LayoutInflater)EditNoteActivity.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                //same view as alert dialog show while uploading files
-                View alertDialogView = inflater.inflate(R.layout.file_upload_progress, null, false);
-                ProgressBar progressBar = (ProgressBar) alertDialogView.findViewById(R.id.bytes_upload_progress_layout_files_progressbar);
-                alertDialogBuilder.setView(alertDialogView);
-                AlertDialog saveFileDialog = alertDialogBuilder.create();
-                SaveFileAsyncTask saveFileTask = new SaveFileAsyncTask(EditNoteActivity.this, file,  saveFileDialog, progressBar, editText.getText().toString());
+                SaveFileAsyncTask saveFileTask = new SaveFileAsyncTask(EditNoteActivity.this, file, editText.getText().toString());
                 try {
                     saveFileTask.execute().get();
                 }catch (InterruptedException e){
@@ -238,10 +219,8 @@ public class EditNoteActivity extends AppCompatActivity {
         private String editTexttext;
         private Context context;
 
-        public SaveFileAsyncTask(Context context, File file, AlertDialog progressAlertDialog, ProgressBar progressBar, String editTexttext){
+        public SaveFileAsyncTask(Context context, File file, String editTexttext){
             this.file = file;
-            this.progressAlertDialog = progressAlertDialog;
-            this.progressBar = progressBar;
             this.editTexttext = editTexttext;
             this.context = context;
 
@@ -250,8 +229,6 @@ public class EditNoteActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progressBar.setMax((int)file.length());
-            progressAlertDialog.show();
         }
 
         @Override
@@ -278,13 +255,14 @@ public class EditNoteActivity extends AppCompatActivity {
         @Override
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
-            progressBar.setProgress(offset);
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            progressAlertDialog.dismiss();
+            Resources resources = context.getResources();
+            String message = resources.getString(R.string.save_file_succesfull);
+            Toast.makeText(context, message,Toast.LENGTH_LONG).show();
         }
     }
 }

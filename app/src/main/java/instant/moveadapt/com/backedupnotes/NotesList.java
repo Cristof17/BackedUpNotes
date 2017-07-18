@@ -245,30 +245,28 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     }
 
     public void deleteWhatNeedsToBeDeletedFromCloud(){
-        File[] files = FileManager.getFiles(NotesList.this);
-        FirebaseStorage storage= null;
-        if (files != null){
-            storage = FirebaseStorage.getInstance();
-        }
-        for (final File f : files) {
-            if (NoteManager.isToBeDeletedFromCloud(NotesList.this, f.getName())){
-                StorageReference bucket = storage.getReference();
-                StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
-                StorageReference fileToBeDeleted = notite.child(f.getName());
-                Task deleteTask = fileToBeDeleted.delete();
-                deleteTask.addOnCompleteListener(new OnCompleteListener(){
-                    @Override
-                    public void onComplete(@NonNull Task task) {
-                        Log.d(TAG, "Deleted " + f.getName() + " from cloud before uploading files");
-                    }
-                });
-                deleteTask.addOnFailureListener(new OnFailureListener(){
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        handleTaskException((StorageException)e);
-                    }
-                });
-            }
+        ArrayList<String> needsToBeDeleted = NoteManager.getWhatNeedsToBeDeleted(NotesList.this);
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference bucket = storage.getReference();
+        StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
+        if (needsToBeDeleted == null)
+            return;
+        for (final String filename : needsToBeDeleted){
+            StorageReference remoteFile = notite.child(filename);
+            Task deleteTask = remoteFile.delete();
+            deleteTask.addOnCompleteListener(new OnCompleteListener() {
+                @Override
+                public void onComplete(@NonNull Task task) {
+                    Log.d(TAG, "Successfully deleted remote file " + filename);
+                    NoteManager.removeToBeDeletedFromCloud(NotesList.this, filename);
+                }
+            });
+            deleteTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    handleTaskException((StorageException)e);
+                }
+            });
         }
     }
 

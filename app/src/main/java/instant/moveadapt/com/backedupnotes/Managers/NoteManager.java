@@ -113,4 +113,9 @@ public class NoteManager {
         return false;
     }
 
+    public static ArrayList<String> getWhatNeedsToBeDeleted(Context context){
+        ArrayList<String> needsToBeDeleted = PreferenceManager.getFilesThatNeedToBeDeleted(context);
+        return needsToBeDeleted;
+    }
+
 }

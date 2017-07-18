@@ -216,4 +216,16 @@ public class PreferenceManager {
         }
         return false;
     }
+
+    public static ArrayList<String> getFilesThatNeedToBeDeleted(Context context){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        ArrayList<String> needToBeDeleted = null;
+        String whatNeedsToBeDeletedJSON = prefs.getString(Constants.PREFERENCE_TO_BE_DELETED, "");
+        Gson gson = new Gson();
+        if (whatNeedsToBeDeletedJSON != null && !whatNeedsToBeDeletedJSON.equals("")){
+            Type arrayListType = new TypeToken<ArrayList<String>>(){}.getType();
+            needToBeDeleted = gson.fromJson(whatNeedsToBeDeletedJSON, arrayListType);
+        }
+        return needToBeDeleted;
+    }
 }

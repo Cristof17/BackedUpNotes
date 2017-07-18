@@ -19,4 +19,5 @@
     <string name="upload_files_text">Files uploaded</string>
     <string name="upload_per_file_text">Bytes transfered</string>
     <string name="save_file_progress_title">Saving note</string>
+    <string name="save_file_succesfull">Saved</string>
 </resources>
