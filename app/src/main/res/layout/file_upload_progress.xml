@@ -3,29 +3,14 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/upload_files_text"/>
-
     <ProgressBar
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
         android:indeterminate="false"
-        android:id="@+id/file_upload_progress_layout_files_progressbar"/>
+        android:layout_margin="10dp"
+        android:id="@+id/bytes_upload_progress_layout_files_progressbar"
+        style="?android:attr/progressBarStyleHorizontal"/>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/upload_per_file_text"/>
-
-    <ProgressBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:indeterminate="false"
-        android:id="@+id/bytes_upload_progress_layout_files_progressbar"/>
 
 </LinearLayout>

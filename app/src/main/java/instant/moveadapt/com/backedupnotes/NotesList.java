@@ -34,6 +34,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import android.widget.Toast;
@@ -77,6 +78,10 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
     private StorageMetadata returnMetadata;
     private int fileIndex = 0;
+
+    private int numFiles = 0;
+    private int uploadedBytes = 0;
+    private int totalUploadSize = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,6 +229,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 final FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference bucket = storage.getReference();
                 StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
+                deleteWhatNeedsToBeDeletedFromCloud();
                 uploadFiles(notite);
             }
             break;
@@ -236,6 +242,34 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         addButton.hide();
         notesList.setVisibility(View.INVISIBLE);
         errorTextView.setText(getResources().getString(R.string.permission_error_text));
+    }
+
+    public void deleteWhatNeedsToBeDeletedFromCloud(){
+        File[] files = FileManager.getFiles(NotesList.this);
+        FirebaseStorage storage= null;
+        if (files != null){
+            storage = FirebaseStorage.getInstance();
+        }
+        for (final File f : files) {
+            if (NoteManager.isToBeDeletedFromCloud(NotesList.this, f.getName())){
+                StorageReference bucket = storage.getReference();
+                StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
+                StorageReference fileToBeDeleted = notite.child(f.getName());
+                Task deleteTask = fileToBeDeleted.delete();
+                deleteTask.addOnCompleteListener(new OnCompleteListener(){
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        Log.d(TAG, "Deleted " + f.getName() + " from cloud before uploading files");
+                    }
+                });
+                deleteTask.addOnFailureListener(new OnFailureListener(){
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        handleTaskException((StorageException)e);
+                    }
+                });
+            }
+        }
     }
 
     public void uploadFiles(StorageReference parentFolder){
@@ -254,9 +288,12 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             /*
                 Get the number of files
              */
-            int numFiles = 0;
-            for (File f : files){
-                numFiles++;
+
+            for (int i = 0; i < files.length; ++i) {
+                if (NoteManager.getNoteStateForIndex(NotesList.this, i) == Constants.STATE_LOCAL) {
+                    numFiles++;
+                    totalUploadSize += files[i].length();
+                }
             }
 
             /*
@@ -284,6 +321,21 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             /*
                 Send the files
              */
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View rootView = inflater.inflate(R.layout.file_upload_progress, null);
+            final ProgressBar numBytesProgressBar = (ProgressBar) rootView.findViewById(R.id.bytes_upload_progress_layout_files_progressbar);
+            numBytesProgressBar.setMax(totalUploadSize);
+            Resources resources = getResources();
+            AlertDialog.Builder progressDialogBuilder = new AlertDialog.Builder(NotesList.this);
+            progressDialogBuilder.setTitle(resources.getString(R.string.upload_per_file_text));
+            progressDialogBuilder.setView(rootView);
+            final AlertDialog alertDialog = progressDialogBuilder.create();
+
+            if (totalUploadSize != 0){
+                alertDialog.show();
+            } else {
+                return;
+            }
 
             for (fileIndex = 0; fileIndex < files.length; ++fileIndex){
                 final File f = files[fileIndex];
@@ -295,6 +347,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
                     if (states != null){
                         if (states.get(fileIndex) == Constants.STATE_LOCAL){
+
                             StorageMetadata.Builder storageMetadataBuilder = new StorageMetadata.Builder();
                             storageMetadataBuilder.setContentType("text/plain");
                             StorageMetadata defaultMetadata = storageMetadataBuilder.build();
@@ -314,7 +367,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                             uploadFileTask.addOnSuccessListener(new OnSuccessListener(){
                                 @Override
                                 public void onSuccess(Object o) {
-                                    UploadTask.TaskSnapshot taskSnapshot = (UploadTask.TaskSnapshot)o;
+                                    final UploadTask.TaskSnapshot taskSnapshot = (UploadTask.TaskSnapshot)o;
                                     StorageMetadata storageMetadata = null;
                                     if (taskSnapshot != null){
                                         storageMetadata = taskSnapshot.getMetadata();
@@ -325,6 +378,12 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                                         NoteManager.setNoteStateByName(NotesList.this, filename, Constants.STATE_GLOBAL);
                                         NoteManager.completeUploadByFilename(NotesList.this, filename);
                                         notesList.getAdapter().notifyDataSetChanged();
+                                    }
+                                    uploadedBytes += taskSnapshot.getBytesTransferred();
+                                    numBytesProgressBar.setProgress(uploadedBytes );
+                                    Log.d(TAG, "Uploaded = " + uploadedBytes + " total = " + totalUploadSize);
+                                    if (uploadedBytes == totalUploadSize){
+                                        alertDialog.dismiss();
                                     }
                                 }
                             });
