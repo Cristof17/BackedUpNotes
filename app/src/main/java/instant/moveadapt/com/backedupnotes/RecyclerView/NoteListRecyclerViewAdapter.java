@@ -121,7 +121,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(noteFile));
-                String firstLine = reader.readLine();
+                char firstLineChars[] = new char [Constants.CHARS_PER_NOTE_TITLE];
+                reader.read(firstLineChars, 0, Constants.CHARS_PER_NOTE_TITLE);
+                StringBuilder firstLineBuilder = new StringBuilder();
+                firstLineBuilder.append(firstLineChars);
+                String firstLine = firstLineBuilder.toString();
                 if (firstLine != null && !firstLine.equals("")){
                     tv.setText(firstLine);
                     Resources resources = context.getResources();

@@ -10,11 +10,15 @@
 
     </android.support.v7.widget.Toolbar>
 
+    <ScrollView
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_below="@id/new_note_toolbar">
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/new_note_edit_text"
-        android:layout_below="@id/new_note_toolbar"
         android:hint="@string/new_note_hint"
         android:autoLink="all"
         android:breakStrategy="high_quality"
@@ -25,5 +29,6 @@
         android:shadowDy="2.0"
         android:padding="10dp"
         />
+    </ScrollView>
 
 </RelativeLayout>

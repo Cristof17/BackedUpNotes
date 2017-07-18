@@ -20,5 +20,6 @@ public class Constants {
 
     public static final String INTENT_EDIT_FILE_POSITION = "intent_edit_file_position";
 
+    public static final int CHARS_PER_NOTE_TITLE = 100;
 
 }
