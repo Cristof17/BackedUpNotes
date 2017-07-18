@@ -384,6 +384,8 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                                     Log.d(TAG, "Uploaded = " + uploadedBytes + " total = " + totalUploadSize);
                                     if (uploadedBytes == totalUploadSize){
                                         alertDialog.dismiss();
+                                        totalUploadSize = 0;
+                                        uploadedBytes = 0;
                                     }
                                 }
                             });
