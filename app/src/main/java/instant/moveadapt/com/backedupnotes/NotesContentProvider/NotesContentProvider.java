@@ -29,9 +29,13 @@ public class NotesContentProvider extends ContentProvider {
         if (tableName == null)
             return null;
         Cursor c = null;
-        if (notesDatabase != null){
-            SQLiteDatabase readableDB = notesDatabase.getReadableDatabase();
-            c = readableDB.query(tableName, projection,selection, selectionArgs, null, null, sortOrder);
+        try {
+            if (notesDatabase != null) {
+                SQLiteDatabase readableDB = notesDatabase.getReadableDatabase();
+                c = readableDB.query(tableName, projection, selection, selectionArgs, null, null, sortOrder);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return c;
     }
@@ -46,10 +50,15 @@ public class NotesContentProvider extends ContentProvider {
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
         String tableName = getTableNameByUri(uri);
+        long lastIdInserted = -1;
         if (tableName == null)
             return null;
-        SQLiteDatabase writableDatabase = notesDatabase.getWritableDatabase();
-        long lastIdInserted = writableDatabase.insert(tableName, null, values);
+        try {
+            SQLiteDatabase writableDatabase = notesDatabase.getWritableDatabase();
+            lastIdInserted = writableDatabase.insert(tableName, null, values);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         if (lastIdInserted == -1)
             return null;
 
@@ -60,20 +69,30 @@ public class NotesContentProvider extends ContentProvider {
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
         String tableName = getTableNameByUri(uri);
+        long deletedRows = -1;
         if (tableName == null)
             return -1;
-        SQLiteDatabase writableDatabase = notesDatabase.getWritableDatabase();
-        long deletedRows = writableDatabase.delete(tableName,selection, selectionArgs);
+        try {
+            SQLiteDatabase writableDatabase = notesDatabase.getWritableDatabase();
+            deletedRows = writableDatabase.delete(tableName, selection, selectionArgs);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         return (int)deletedRows;
     }
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
         String tableName = getTableNameByUri(uri);
+        int rowsUpdated = -1;
         if (tableName == null)
             return -1;
-        SQLiteDatabase writableDataase = notesDatabase.getWritableDatabase();
-        int rowsUpdated = writableDataase.update(tableName,values, selection, selectionArgs);
+        try {
+            SQLiteDatabase writableDataase = notesDatabase.getWritableDatabase();
+            rowsUpdated = writableDataase.update(tableName, values, selection, selectionArgs);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         return rowsUpdated;
     }
 

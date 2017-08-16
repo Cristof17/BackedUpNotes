@@ -1,9 +1,11 @@
 package instant.moveadapt.com.backedupnotes.RecyclerView;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.view.ActionMode;
 import android.support.v7.widget.CardView;
@@ -27,6 +29,7 @@ import instant.moveadapt.com.backedupnotes.Constants;
 import instant.moveadapt.com.backedupnotes.EditNoteActivity;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
+import instant.moveadapt.com.backedupnotes.Notita;
 import instant.moveadapt.com.backedupnotes.R;
 
 /**
@@ -41,14 +44,15 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     private RecyclerView recyclerView;
     private Activity activity;
     private ActionMode.Callback actionModeCallback;
+    private ArrayList<Notita> notite;
 
     public NoteListRecyclerViewAdapter(Context context, RecyclerView recyclerView, Activity activity, ActionMode.Callback actionModeCallback){
         this.context = context;
-        this.notesStates = NoteManager.getNotesStates(context);
         this.recyclerView = recyclerView;
         this.actionModeMonitor = new ActionModeMonitor(FileManager.getNumNotes(context));
         this.activity = activity;
         this.actionModeCallback = actionModeCallback;
+        this.notite = NoteManager.getNotesFromDatabase(context);
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
@@ -75,7 +79,6 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             }
             notifyDataSetChanged();
             actionModeMonitor.setActivated(longClickAdapterPosition, true);
-            Toast.makeText(context, "Position " + longClickAdapterPosition + " activated " + actionModeMonitor.getActivated(longClickAdapterPosition), Toast.LENGTH_LONG).show();
         }
         //this callback consumed the event return true
         return true;
@@ -93,7 +96,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                 View rootView = recyclerView.findContainingItemView(v);
                 int viewPosition = recyclerView.getChildAdapterPosition(rootView);
                 Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
-                editNoteIntent.putExtra(Constants.INTENT_EDIT_FILE_POSITION, viewPosition);
+                editNoteIntent.putExtra(Constants.INTENT_EDIT_FILE_POSITION, notite.get(viewPosition).getId());
                 context.startActivity(editNoteIntent);
             }
             notifyDataSetChanged();
@@ -117,34 +120,8 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
             View rootView = holder.getRootView();
             TextView tv = (TextView)holder.getRootView().findViewById(R.id.note_list_item_text_view);
-            File noteFile = FileManager.getFileForIndex(context, position);
-
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(noteFile));
-                char firstLineChars[] = new char [Constants.CHARS_PER_NOTE_TITLE];
-                reader.read(firstLineChars, 0, Constants.CHARS_PER_NOTE_TITLE);
-                StringBuilder firstLineBuilder = new StringBuilder();
-                firstLineBuilder.append(firstLineChars);
-                String firstLine = firstLineBuilder.toString();
-                if (firstLine != null && !firstLine.equals("")){
-                    tv.setText(firstLine);
-                    Resources resources = context.getResources();
-                    if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_LOCAL){
-                        tv.setTextColor(Color.parseColor("#990000"));
-                    } else if (NoteManager.getNoteStateForIndex(context, position) == Constants.STATE_GLOBAL){
-                        tv.setTextColor(Color.parseColor("#000000"));
-                    }
-                } else {
-                    Resources resources = context.getResources();
-                    tv.setText(resources.getString(R.string.note_unknown_title));
-                }
-
-            }catch (FileNotFoundException e){
-                e.printStackTrace();
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-
+            Notita notita = notite.get(position);
+            tv.setText(notita.getNote());
             /*
                 Put the colors
              */
@@ -160,13 +137,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
     @Override
     public int getItemCount() {
-        int numberOfItemsInTheList = FileManager.getNumNotes(context);
-        /*
-            Expand the size of the monitor with the new note
-         */
-        if (actionModeMonitor != null){
-            actionModeMonitor.refreshSize(numberOfItemsInTheList);
-        }
-        return numberOfItemsInTheList;
+        this.notite = NoteManager.getNotesFromDatabase(context);
+        if (notite != null)
+            return notite.size();
+        return 0;
     }
+
+
 }

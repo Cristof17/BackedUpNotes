@@ -130,7 +130,7 @@ public class NewNoteActivity extends AppCompatActivity {
         Uri lastUri = resolver.insert(NotesDatabaseContract.Notite.URI, vals);
         if (lastUri != null){
             int lastId = Integer.parseInt(lastUri.getLastPathSegment());
-            Log.d(TAG, "Inserted new note with id = " + note);
+            Log.d(TAG, "Inserted new note with id = " + lastId);
         }
     }
 }

@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -60,6 +61,7 @@ import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
 import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
+import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 
@@ -103,7 +105,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             /*
                 Create the folder where to store notes
              */
-            FileManager.createNotesFolder(this);
+//            FileManager.createNotesFolder(this);
         }
 
         addButton.setOnClickListener(new View.OnClickListener(){
@@ -159,7 +161,8 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     @Override
     protected void onStart() {
         super.onStart();
-        notesListRecyclerViewAdapter.notifyDataSetChanged();
+        if (notesListRecyclerViewAdapter != null)
+            notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -189,18 +192,18 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             {
                 ArrayList<Integer> toDelete = new ArrayList<Integer>();
                 //delete the notes which have been selected
-                for (int i = 0; i < FileManager.getNumNotes(NotesList.this); ++i) {
+                ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(this);
+                for (int i = 0; i < notite.size() ; ++i) {
                     if (ActionModeMonitor.getActivated(i)) {
                         ActionModeMonitor.deleteActivated(i);
-                        NoteManager.deleteNoteState(NotesList.this, i);
-                        File toBeDeleted = FileManager.getFileForIndex(NotesList.this, i);
-                        FileManager.deleteFile(NotesList.this,i);
-                        ConnectivityManager connectionManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-                        if (connectionManager.getActiveNetworkInfo() != null){
-                            deleteCloudFile(toBeDeleted.getName());
-                        } else {
-                            NoteManager.addToBeDeletedFromCloud(NotesList.this, toBeDeleted.getName());
-                        }
+                        ContentResolver resolver = getContentResolver();
+                        String whereClause = NotesDatabaseContract.Notite._ID + " = ? ";
+                        String[] whereArgs = {notite.get(i).getId() +""};
+                        int deletedRows = resolver.delete(NotesDatabaseContract.Notite.URI,
+                                whereClause,
+                                whereArgs);
+                        Log.d(TAG, "Deleted " + deletedRows + " rows ");
+                        //delete from cloud
                         notesListRecyclerViewAdapter.notifyItemRemoved(i);
                         --i;
                     }
@@ -229,12 +232,19 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 final FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference bucket = storage.getReference();
                 StorageReference notite = bucket.child(Constants.REMOTE_NOTE_FOLDER);
-                deleteWhatNeedsToBeDeletedFromCloud();
-                uploadFiles(notite);
+//                deleteWhatNeedsToBeDeletedFromCloud();
+//                uploadFiles(notite);
             }
             break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (notesListRecyclerViewAdapter != null)
+            notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
 
     private void showPermissionErrorText(){

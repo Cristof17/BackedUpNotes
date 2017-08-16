@@ -15,10 +15,11 @@ public class NotesDatabase extends SQLiteOpenHelper {
     }
 
 
-    public static final String CREATE_NOTES_TABLE_STATEMENT = "CREATE TABLE " + NotesDatabaseContract.Notite.URI + "(" +
+    public static final String CREATE_NOTES_TABLE_STATEMENT = "CREATE TABLE " + NotesDatabaseContract.Notite.TABLE_NAME + "(" +
             NotesDatabaseContract.Notite._ID + " integer primary key autoincrement, " +
             NotesDatabaseContract.Notite.COLUMN_NOTE + " text not null, " +
             NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP + " integer, " +
+            NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP + " integer," +
             NotesDatabaseContract.Notite.COLUMN_MODIFIED + " text);";
     public static final String DROP_NOTES_TABLE_STATEMENT = "DROP TABLE IF EXISTS " + NotesDatabaseContract.Notite.TABLE_NAME;
 

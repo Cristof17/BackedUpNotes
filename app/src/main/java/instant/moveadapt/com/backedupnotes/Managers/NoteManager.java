@@ -126,25 +126,28 @@ public class NoteManager {
 
     public static ArrayList<Notita> getNotesFromDatabase(Context context){
         ArrayList<Notita> notite = new ArrayList<Notita>();
-        ContentResolver resolver = context.getContentResolver();
-        String[] columns = getNotiteTableColumns();
-        Cursor c = resolver.query(NotesDatabaseContract.Notite.URI,
-                columns,
-                null,
-                null,
-                null);
-        if (c == null || c.getCount() == 0){
-            c.close();
-            return null;
-        }
+        try {
+            ContentResolver resolver = context.getContentResolver();
+            String[] columns = getNotiteTableColumns();
+            Cursor c = resolver.query(NotesDatabaseContract.Notite.URI,
+                    columns,
+                    null,
+                    null,
+                    null);
+            if (c == null || c.getCount() == 0) {
+                return null;
+            }
 
-        int numNotes = c.getCount();
-        for (int i = 0; i < numNotes; ++i){
-            c.moveToNext();
-            Notita notitaNoua = convertNotita(c);
-            notite.add(notitaNoua);
+            int numNotes = c.getCount();
+            for (int i = 0; i < numNotes; ++i) {
+                c.moveToNext();
+                Notita notitaNoua = convertNotita(c);
+                notite.add(notitaNoua);
+            }
+            c.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
-        c.close();
         return notite;
     }
 
