@@ -1,0 +1,8 @@
+material theme sdk version 21 
+screen sizes -> large xhdpi
+	     -> large hdpi
+             -> large xxhdpi
+
+ try KitKatdifferent layout or use AppCompatActivity
+Above api 21 normal layout with floating point action button
+

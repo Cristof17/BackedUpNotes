@@ -1,8 +1,12 @@
 package instant.moveadapt.com.backedupnotes.Managers;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.preference.*;
+import android.provider.ContactsContract;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.widget.Toast;
@@ -12,6 +16,8 @@ import java.util.ArrayList;
 import java.util.logging.LogManager;
 
 import instant.moveadapt.com.backedupnotes.Constants;
+import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
+import instant.moveadapt.com.backedupnotes.Notita;
 
 /**
  * Created by cristof on 10.07.2017.
@@ -116,6 +122,47 @@ public class NoteManager {
     public static ArrayList<String> getWhatNeedsToBeDeleted(Context context){
         ArrayList<String> needsToBeDeleted = PreferenceManager.getFilesThatNeedToBeDeleted(context);
         return needsToBeDeleted;
+    }
+
+    public static ArrayList<Notita> getNotesFromDatabase(Context context){
+        ArrayList<Notita> notite = new ArrayList<Notita>();
+        ContentResolver resolver = context.getContentResolver();
+        String[] columns = getNotiteTableColumns();
+        Cursor c = resolver.query(NotesDatabaseContract.Notite.URI,
+                columns,
+                null,
+                null,
+                null);
+        if (c == null || c.getCount() == 0){
+            c.close();
+            return null;
+        }
+
+        int numNotes = c.getCount();
+        for (int i = 0; i < numNotes; ++i){
+            c.moveToNext();
+            Notita notitaNoua = convertNotita(c);
+            notite.add(notitaNoua);
+        }
+        c.close();
+        return notite;
+    }
+
+    public static String[] getNotiteTableColumns(){
+        return new String[] {NotesDatabaseContract.Notite._ID,
+                NotesDatabaseContract.Notite.COLUMN_MODIFIED,
+                NotesDatabaseContract.Notite.COLUMN_NOTE,
+                NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP,
+                NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP};
+    }
+
+    public static Notita convertNotita(@Nullable  Cursor c){
+        int id = Integer.parseInt(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite._ID)));
+        long createTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP)));
+        long modifyTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP)));
+        boolean modified = Boolean.parseBoolean(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED)));
+        String notita = c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_NOTE));
+        return new Notita(id, createTimestamp, modifyTimestamp, modified, notita);
     }
 
 }
