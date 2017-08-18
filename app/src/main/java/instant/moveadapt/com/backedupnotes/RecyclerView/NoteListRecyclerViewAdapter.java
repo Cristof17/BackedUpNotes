@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.ActionMode;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -49,10 +50,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     public NoteListRecyclerViewAdapter(Context context, RecyclerView recyclerView, Activity activity, ActionMode.Callback actionModeCallback){
         this.context = context;
         this.recyclerView = recyclerView;
-        this.actionModeMonitor = new ActionModeMonitor(FileManager.getNumNotes(context));
         this.activity = activity;
         this.actionModeCallback = actionModeCallback;
         this.notite = NoteManager.getNotesFromDatabase(context);
+        if (notite != null)
+            this.actionModeMonitor = new ActionModeMonitor(notite.size());
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
@@ -137,7 +139,12 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
     @Override
     public int getItemCount() {
+        Log.d("NotesListRecycler", "getItemCount()");
         this.notite = NoteManager.getNotesFromDatabase(context);
+        if (this.notite != null)
+            this.actionModeMonitor.refreshSize(notite.size());
+        else
+            this.actionModeMonitor.refreshSize(0);
         if (notite != null)
             return notite.size();
         return 0;

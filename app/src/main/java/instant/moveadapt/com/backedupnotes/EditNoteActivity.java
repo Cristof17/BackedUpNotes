@@ -102,8 +102,9 @@ public class EditNoteActivity extends AppCompatActivity {
                     finish();
                 }
 
+                c.moveToNext();
                 Notita notita = NoteManager.convertNotita(c);
-                editText.setText(notita.toString());
+                editText.setText(notita.getNote().toString());
             }
         }
 
