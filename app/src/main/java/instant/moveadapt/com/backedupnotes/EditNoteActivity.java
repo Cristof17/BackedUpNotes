@@ -1,60 +1,29 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageException;
-import com.google.firebase.storage.StorageReference;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.security.Permission;
 import java.util.Calendar;
-import java.util.concurrent.ExecutionException;
 
-import instant.moveadapt.com.backedupnotes.Constants;
-import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
-import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
-import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
-import instant.moveadapt.com.backedupnotes.R;
-import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
 
 /**
  * Created by cristof on 13.06.2017.

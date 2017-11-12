@@ -1,26 +1,14 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
-import android.app.Service;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.PermissionChecker;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -28,46 +16,30 @@ import android.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
-import instant.moveadapt.com.backedupnotes.Managers.FileManager;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
-import instant.moveadapt.com.backedupnotes.Managers.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
-import instant.moveadapt.com.backedupnotes.RecyclerView.NewNoteActivity;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 
 public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
     private static final int INTERNET_PERMISSION_REQUEST_CODE = 101;
+    private static final int NEW_NOTE_RESULT_CODE = 2002;
 
     private FloatingActionButton addButton;
     private RecyclerView notesList;
@@ -85,10 +57,13 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     private int uploadedBytes = 0;
     private int totalUploadSize = 0;
 
+    public volatile static boolean canGo = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes_list);
+
         /*
             Bind Views
          */
@@ -112,7 +87,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), NewNoteActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, NEW_NOTE_RESULT_CODE);
             }
         });
 
@@ -133,7 +108,6 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 /*
                     Create the folder where to store notes
                 */
-                FileManager.createNotesFolder(this);
             } else {
                 Log.d(TAG, "Permission for rd/wr to external storage is denied");
                 if (errorTextView !=  null && addButton != null && notesList != null){
@@ -161,6 +135,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart()");
         if (notesListRecyclerViewAdapter != null)
             notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
@@ -186,6 +161,20 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.i(TAG, Thread.currentThread().getName());
+        if (requestCode == NEW_NOTE_RESULT_CODE){
+            if (resultCode == RESULT_OK){
+                if (notesListRecyclerViewAdapter != null){
+                    notesListRecyclerViewAdapter.notifyDataSetChanged();
+                    Log.d(TAG, "onActivityResult() notifyDataSetChanged()");
+                }
+            }
+        }
+    }
+
+    @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
         switch(item.getItemId()){
             case R.id.note_list_contextual_delete_action:
@@ -194,18 +183,17 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(this);
                 for (int i = 0; i < notite.size() ; ++i) {
                     if (ActionModeMonitor.getActivated(i)) {
-                        ActionModeMonitor.deleteActivated(i);
+                        ActionModeMonitor.setActivated(i, false);
                         ContentResolver resolver = getContentResolver();
                         String whereClause = NotesDatabaseContract.Notite._ID + " = ? ";
                         String[] whereArgs = {notite.get(i).getId() +""};
+                        Log.d(TAG, "Deleting note with id = " + notite.get(i).getId());
                         int deletedRows = resolver.delete(NotesDatabaseContract.Notite.URI,
                                 whereClause,
                                 whereArgs);
                         Log.d(TAG, "Deleted " + deletedRows + " rows ");
                         //delete from cloud
                         notesListRecyclerViewAdapter.notifyItemRemoved(i);
-                        notite = NoteManager.getNotesFromDatabase(this);
-                        --i;
                     }
                 }
                 return true;
@@ -243,6 +231,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume()");
         if (notesListRecyclerViewAdapter != null)
             notesListRecyclerViewAdapter.notifyDataSetChanged();
     }

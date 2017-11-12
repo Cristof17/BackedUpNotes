@@ -1,10 +1,16 @@
 package instant.moveadapt.com.backedupnotes.ActionMode;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.logging.LogManager;
+
+import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
+import instant.moveadapt.com.backedupnotes.Notita;
 
 /**
  * Created by cristof on 12.07.2017.
@@ -14,26 +20,29 @@ public class ActionModeMonitor {
 
     private static final String TAG = "[ActionModeMonitor]";
 
-    private static ArrayList<Boolean> selectedItems;
+    private static Hashtable<Notita, Boolean> selectedItems;
     private static boolean hasItemAlreadySelected;
+    private static Context context;
 
-    public ActionModeMonitor(int maxSize){
-        selectedItems = new ArrayList<Boolean>(maxSize);
-        for (int i = 0; i < maxSize; ++i)
-            selectedItems.add(new Boolean(false));
+    public ActionModeMonitor(Context context){
+        ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
+        if (notite != null) {
+            selectedItems = new Hashtable<Notita, Boolean>(20 * notite.size());
+            for (Notita notita : notite) {
+                selectedItems.put(notita, false);
+            }
+        }
+
         hasItemAlreadySelected = false;
-        Log.d(TAG, " Monitor booleans size = " + selectedItems.size());
+        Log.d(TAG, "Created hashtable for notes");
     }
 
-    public static void setActivated(int position, boolean selected){
-        if (selectedItems.size() != 0)
-            selectedItems.set(position, selected);
-    }
-
-    public static void deleteActivated(int position){
-        if (selectedItems != null){
-            selectedItems.set(position, false);
-            selectedItems.remove(position);
+    public static void setActivated(int position, boolean mode){
+        ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
+        if (notite != null && position <= notite.size() && position >= 0) {
+            if (notite != null) {
+                    selectedItems.put(notite.get(position), mode);
+            }
         }
     }
 
@@ -42,8 +51,12 @@ public class ActionModeMonitor {
     }
 
     public static boolean getActivated(int position){
-        if (selectedItems.size() > 0)
-            return selectedItems.get(position);
+        ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
+        if (notite != null && position < notite.size() && position >= 0) {
+            if (notite != null && selectedItems != null) {
+                return selectedItems.get(notite.get(position));
+            }
+        }
         return false;
     }
 
@@ -51,17 +64,19 @@ public class ActionModeMonitor {
         ActionModeMonitor.hasItemAlreadySelected = hasItemAlreadySelected;
     }
 
-    public static void refreshSize(int newSize){
-        ArrayList<Boolean> newSelectedItems = new ArrayList<Boolean>();
-
-        for (int i = 0; i < newSize; ++i){
-            newSelectedItems.add(false);
+    public static void resize(){
+        Log.d(TAG, "resize()");
+        if (selectedItems != null) {
+            Hashtable<Notita, Boolean> newNotite = new Hashtable<Notita, Boolean>(selectedItems.size() * 10);
+            Enumeration<Notita> keys = selectedItems.keys();
+            if (keys != null) {
+                while (keys.hasMoreElements()) {
+                    Notita current = keys.nextElement();
+                    newNotite.put(current, selectedItems.get(current));
+                }
+            }
+            Log.d(TAG, "resize finished");
+            selectedItems = null;
         }
-
-        for (int i = 0; i < selectedItems.size(); ++i){
-            newSelectedItems.set(i, selectedItems.get(i));
-        }
-        selectedItems = null;
-        selectedItems = newSelectedItems;
     }
 }
