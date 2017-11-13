@@ -91,7 +91,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         if (v instanceof CardView){
             int position = recyclerView.getChildAdapterPosition(v);
             if (actionModeMonitor.isSelected()){
-                actionModeMonitor.setActivated(position, (!actionModeMonitor.getActivated(position)));
+                actionModeMonitor.setActivated(position, (!actionModeMonitor.getActivated(context, position)));
             } else {
                 //edit note activity
                 View rootView = recyclerView.findContainingItemView(v);
@@ -126,11 +126,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             /*
                 Put the colors
              */
-            if (actionModeMonitor.getActivated(position)) {
-                rootView.setActivated(actionModeMonitor.getActivated(position));
+            if (actionModeMonitor.getActivated(context, position)) {
+                rootView.setActivated(actionModeMonitor.getActivated(context, position));
                 rootView.setBackgroundColor(Color.RED);
             } else {
-                rootView.setActivated(actionModeMonitor.getActivated(position));
+                rootView.setActivated(actionModeMonitor.getActivated(context, position));
                 rootView.setBackgroundColor(Color.WHITE);
             }
             if (notita.getModified() == true){

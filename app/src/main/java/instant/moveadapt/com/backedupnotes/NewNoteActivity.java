@@ -135,6 +135,8 @@ public class NewNoteActivity extends AppCompatActivity {
             ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(getApplicationContext());
             int position = -1;
             Log.d(TAG, "Inserted new note with id = " + lastId);
+            //add to the action mode monitor the new note
+            ActionModeMonitor.addNote(NoteManager.getNoteById(getApplicationContext(), lastId));
         }
         NotesList.canGo = true;
     }

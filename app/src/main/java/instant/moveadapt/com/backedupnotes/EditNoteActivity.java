@@ -83,6 +83,13 @@ public class EditNoteActivity extends AppCompatActivity {
 
     }
 
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d(TAG, "onBackButtonPressed()");
+    }
+
     @Override
     protected void onPause() {
         super.onPause();

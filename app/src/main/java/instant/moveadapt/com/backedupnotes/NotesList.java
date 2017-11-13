@@ -182,7 +182,7 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
                 //delete the notes which have been selected
                 ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(this);
                 for (int i = 0; i < notite.size() ; ++i) {
-                    if (ActionModeMonitor.getActivated(i)) {
+                    if (ActionModeMonitor.getActivated(getApplicationContext(), i)) {
                         ActionModeMonitor.setActivated(i, false);
                         ContentResolver resolver = getContentResolver();
                         String whereClause = NotesDatabaseContract.Notite._ID + " = ? ";

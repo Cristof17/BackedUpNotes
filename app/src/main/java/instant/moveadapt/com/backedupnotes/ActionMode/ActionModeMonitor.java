@@ -23,13 +23,21 @@ public class ActionModeMonitor {
     private static Hashtable<Notita, Boolean> selectedItems;
     private static boolean hasItemAlreadySelected;
     private static Context context;
+    private static int max;
+    private static int occupied;
 
     public ActionModeMonitor(Context context){
         ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
         if (notite != null) {
-            selectedItems = new Hashtable<Notita, Boolean>(20 * notite.size());
+            max = 10 * notite.size();
+        }else
+            max = 10;
+        occupied = 0;
+        if (notite != null) {
+            selectedItems = new Hashtable<Notita, Boolean>(max);
             for (Notita notita : notite) {
-                selectedItems.put(notita, false);
+                selectedItems.put(notita, new Boolean(false));
+                occupied++;
             }
         }
 
@@ -37,11 +45,22 @@ public class ActionModeMonitor {
         Log.d(TAG, "Created hashtable for notes");
     }
 
+    public static void addNote(Notita newNote){
+        if (selectedItems != null) {
+            if (newNote != null) {
+                selectedItems.put(newNote, new Boolean(false));
+                occupied++;
+            }
+        }
+    }
+
     public static void setActivated(int position, boolean mode){
         ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
-        if (notite != null && position <= notite.size() && position >= 0) {
+        if (notite != null && position < notite.size() && position >= -1) {
             if (notite != null) {
-                    selectedItems.put(notite.get(position), mode);
+                if (selectedItems != null) {
+                    selectedItems.put(notite.get(position), new Boolean(mode));
+                }
             }
         }
     }
@@ -50,11 +69,14 @@ public class ActionModeMonitor {
         return hasItemAlreadySelected;
     }
 
-    public static boolean getActivated(int position){
+    public static boolean getActivated(Context context, int position){
         ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
         if (notite != null && position < notite.size() && position >= 0) {
             if (notite != null && selectedItems != null) {
-                return selectedItems.get(notite.get(position));
+                if (selectedItems != null) {
+                    Notita val = notite.get(position);
+                    return selectedItems.get(notite.get(position));
+                }
             }
         }
         return false;
@@ -66,17 +88,24 @@ public class ActionModeMonitor {
 
     public static void resize(){
         Log.d(TAG, "resize()");
-        if (selectedItems != null) {
-            Hashtable<Notita, Boolean> newNotite = new Hashtable<Notita, Boolean>(selectedItems.size() * 10);
-            Enumeration<Notita> keys = selectedItems.keys();
-            if (keys != null) {
-                while (keys.hasMoreElements()) {
-                    Notita current = keys.nextElement();
-                    newNotite.put(current, selectedItems.get(current));
+        Log.d(TAG, "Load factor = " + 0.7 * max);
+        if (0.7f*max <= occupied) {
+            Log.d(TAG, "Resizing hashtable = " + 0.7 * max + " occupied = " + occupied);
+            if (selectedItems != null) {
+                max = max * 10;
+                Hashtable<Notita, Boolean> newNotite = new Hashtable<Notita, Boolean>();
+                Enumeration<Notita> keys = selectedItems.keys();
+                if (keys != null) {
+                    while (keys.hasMoreElements()) {
+                        Notita current = keys.nextElement();
+                        newNotite.put(current, new Boolean (selectedItems.get(current)));
+                    }
                 }
+                Log.d(TAG, "resize finished");
+                selectedItems = null;
             }
-            Log.d(TAG, "resize finished");
-            selectedItems = null;
+        }else{
+            Log.d(TAG, "No need to resize; Load factor = " + 0.7 * max + " occupied = " + occupied);
         }
     }
 }

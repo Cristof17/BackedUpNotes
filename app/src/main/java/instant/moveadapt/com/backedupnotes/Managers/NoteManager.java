@@ -129,4 +129,15 @@ public class NoteManager {
         return null;
     }
 
+    public static Notita getNoteById(Context context, int id){
+        ArrayList<Notita> notite = getNotesFromDatabase(context);
+        if (notite != null){
+            for(Notita note : notite){
+                if (note.getId() == id)
+                    return note;
+            }
+        }
+        return null;
+    }
+
 }
