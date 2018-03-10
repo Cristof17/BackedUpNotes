@@ -38,17 +38,24 @@ import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdap
 
 public class NotesList extends AppCompatActivity implements ActionMode.Callback{
 
+    /*
+     * Permission requests code
+     */
     private static final int INTERNET_PERMISSION_REQUEST_CODE = 101;
+    public static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
     private static final int NEW_NOTE_RESULT_CODE = 2002;
+    private static final String TAG = "[NOTE_LIST]";
 
     private FloatingActionButton addButton;
     private RecyclerView notesList;
-    private NoteListRecyclerViewAdapter notesListRecyclerViewAdapter;
-    private TextView errorTextView;//used for when t
-    // he permission is not granted to show to the user
-    //she cannot use the app
+    private NoteListRecyclerViewAdapter notesListRecyclerViewAdapter;       //adapter for recyclerview
+
+    /*
+     * used for when the permission is not granted to show to the user
+     * she cannot use the app
+     */
+    private TextView errorTextView;
     private LinearLayoutManager llm;
-    private static final String TAG = "[NOTE_LIST]";
 
     private StorageMetadata returnMetadata;
     private int fileIndex = 0;
@@ -62,64 +69,75 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_notes_list);
 
-        /*
-            Bind Views
+        /**
+         * TODO Check this adapter
          */
-        addButton = (FloatingActionButton)findViewById(R.id.add_note_button);
-        errorTextView = (TextView)findViewById(R.id.error_text_view);
-        notesList = (RecyclerView)findViewById(R.id.recycler_view);
-
-         /*
-            Request permission for android 6.0 and upwards
-         */
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(NotesList.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.READ_WRITE_PERMISSION_REQ_CODE);
-        } else {
-            /*
-                Create the folder where to store notes
-             */
-//            FileManager.createNotesFolder(this);
-        }
-
-        addButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), NewNoteActivity.class);
-                startActivityForResult(intent, NEW_NOTE_RESULT_CODE);
-            }
-        });
-
         notesListRecyclerViewAdapter = new NoteListRecyclerViewAdapter(this, notesList, this, this);
         llm = new LinearLayoutManager(this);
-        notesList.setAdapter(notesListRecyclerViewAdapter);
-        notesList.setLayoutManager(llm);
-        notesList.setItemAnimator(new DefaultItemAnimator());
+
+        addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
+        errorTextView = (TextView) findViewById(R.id.error_text_view);
+        notesList = (RecyclerView) findViewById(R.id.recycler_view);
+
+        /*
+         *  Request permission for android 6.0 and upwards
+         */
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(NotesList.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
+        }
+
+//        addButton.setOnClickListener(new View.OnClickListener(){
+//
+//            @Override
+//            public void onClick(View view) {
+//                /**
+//                 * Start new Note activity
+//                 */
+//                Intent intent = new Intent(getApplicationContext(), NewNoteActivity.class);
+//                startActivityForResult(intent, NEW_NOTE_RESULT_CODE);
+//            }
+//        });
+//        notesList.setLayoutManager(llm);
+//        notesList.setAdapter(notesListRecyclerViewAdapter);
+//        notesList.setItemAnimator(new DefaultItemAnimator());
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == Constants.READ_WRITE_PERMISSION_REQ_CODE){
+        if (requestCode == READ_WRITE_PERMISSION_REQ_CODE){
             int result = grantResults[0];
+
             if (result == PackageManager.PERMISSION_GRANTED){
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");
-                /*
-                    Create the folder where to store notes
-                */
             } else {
                 Log.d(TAG, "Permission for rd/wr to external storage is denied");
                 if (errorTextView !=  null && addButton != null && notesList != null){
-                    showPermissionErrorText();
+                    addButton.setVisibility(View.INVISIBLE);
+                    notesList.setVisibility(View.INVISIBLE);
+                    errorTextView.setVisibility(View.VISIBLE);
+                    /*
+                     * Show custom text for error
+                     */
+                    errorTextView.setText(getResources().getString(R.string.permission_error_text));
                 } else {
+                    /*
+                     * Should not get here
+                     */
                     finish();
                 }
             }
         }
 
+        /*
+         * Revise the action when the user grants or denies permission for internet
+         */
         if (requestCode == INTERNET_PERMISSION_REQUEST_CODE){
             int result = grantResults[0];
+
             if (result == PackageManager.PERMISSION_GRANTED){
                 Resources res = getResources();
                 String permissionGrantedMessage = res.getString(R.string.permission_granted_message);
@@ -136,16 +154,19 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "onStart()");
-        if (notesListRecyclerViewAdapter != null)
-            notesListRecyclerViewAdapter.notifyDataSetChanged();
+//        if (notesListRecyclerViewAdapter != null)
+//            notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.note_list_menu, menu);
-        return true;
-    }
+    /*
+     * Use toolbar instead of menu
+     */
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        MenuInflater inflater = getMenuInflater();
+//        inflater.inflate(R.menu.note_list_menu, menu);
+//        return true;
+//    }
 
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -235,38 +256,4 @@ public class NotesList extends AppCompatActivity implements ActionMode.Callback{
         if (notesListRecyclerViewAdapter != null)
             notesListRecyclerViewAdapter.notifyDataSetChanged();
     }
-
-    private void showPermissionErrorText(){
-        //set other views to invisible so that the error text view to be visible
-        addButton.hide();
-        notesList.setVisibility(View.INVISIBLE);
-        errorTextView.setText(getResources().getString(R.string.permission_error_text));
-    }
-
-    public void handleTaskException(StorageException storageException){
-        switch (storageException.getErrorCode()) {
-            case StorageException.ERROR_BUCKET_NOT_FOUND: {
-                Toast.makeText(NotesList.this, "Bucket not found", Toast.LENGTH_LONG).show();
-                break;
-            }
-            case StorageException.ERROR_NOT_AUTHORIZED: {
-                Toast.makeText(NotesList.this, "Not authorized to access the server folder", Toast.LENGTH_LONG).show();
-                break;
-            }
-            case StorageException.ERROR_UNKNOWN: {
-                Toast.makeText(NotesList.this, "An unknown error occured", Toast.LENGTH_LONG).show();
-                break;
-            }
-            case StorageException.ERROR_OBJECT_NOT_FOUND: {
-                Toast.makeText(NotesList.this, "Server folder does not exist", Toast.LENGTH_LONG).show();
-                break;
-            }
-            case StorageException.ERROR_PROJECT_NOT_FOUND: {
-                Toast.makeText(NotesList.this, "Remote server project not found", Toast.LENGTH_LONG).show();
-                break;
-            }
-        }
-    }
-
-
 }

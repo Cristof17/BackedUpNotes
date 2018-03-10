@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.UUID;
 import java.util.logging.LogManager;
 
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
@@ -20,7 +21,7 @@ public class ActionModeMonitor {
 
     private static final String TAG = "[ActionModeMonitor]";
 
-    private static Hashtable<Notita, Boolean> selectedItems;
+    private static Hashtable<UUID, Boolean> selectedItems;
     private static boolean hasItemAlreadySelected;
     private static Context context;
     private static int max;
@@ -34,9 +35,9 @@ public class ActionModeMonitor {
             max = 10;
         occupied = 0;
         if (notite != null) {
-            selectedItems = new Hashtable<Notita, Boolean>(max);
+            selectedItems = new Hashtable<UUID, Boolean>(max);
             for (Notita notita : notite) {
-                selectedItems.put(notita, new Boolean(false));
+                selectedItems.put(notita.getUuid(), new Boolean(false));
                 occupied++;
             }
         }
@@ -46,10 +47,13 @@ public class ActionModeMonitor {
     }
 
     public static void addNote(Notita newNote){
-        if (selectedItems != null) {
-            if (newNote != null) {
-                selectedItems.put(newNote, new Boolean(false));
-                occupied++;
+        if (newNote != null) {
+            UUID newNoteUUID = newNote.getUuid();
+            if (selectedItems != null) {
+                if (newNote != null) {
+                    selectedItems.put(newNoteUUID, new Boolean(false));
+                    occupied++;
+                }
             }
         }
     }
@@ -59,7 +63,7 @@ public class ActionModeMonitor {
         if (notite != null && position < notite.size() && position >= -1) {
             if (notite != null) {
                 if (selectedItems != null) {
-                    selectedItems.put(notite.get(position), new Boolean(mode));
+                    selectedItems.put(notite.get(position).getUuid(), new Boolean(mode));
                 }
             }
         }
@@ -73,10 +77,8 @@ public class ActionModeMonitor {
         ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(context);
         if (notite != null && position < notite.size() && position >= 0) {
             if (notite != null && selectedItems != null) {
-                if (selectedItems != null) {
-                    Notita val = notite.get(position);
-                    return selectedItems.get(notite.get(position));
-                }
+                Notita val = notite.get(position);
+                return false;
             }
         }
         return false;
@@ -93,11 +95,11 @@ public class ActionModeMonitor {
             Log.d(TAG, "Resizing hashtable = " + 0.7 * max + " occupied = " + occupied);
             if (selectedItems != null) {
                 max = max * 10;
-                Hashtable<Notita, Boolean> newNotite = new Hashtable<Notita, Boolean>();
-                Enumeration<Notita> keys = selectedItems.keys();
+                Hashtable<UUID, Boolean> newNotite = new Hashtable<UUID, Boolean>();
+                Enumeration<UUID> keys = selectedItems.keys();
                 if (keys != null) {
                     while (keys.hasMoreElements()) {
-                        Notita current = keys.nextElement();
+                        UUID current = keys.nextElement();
                         newNotite.put(current, new Boolean (selectedItems.get(current)));
                     }
                 }

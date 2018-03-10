@@ -1,5 +1,7 @@
 package instant.moveadapt.com.backedupnotes;
 
+import java.util.UUID;
+
 /**
  * Created by cristof on 16.08.2017.
  */
@@ -11,13 +13,15 @@ public class Notita {
     private long modifiedTimestamp;
     private boolean modified;
     private String note;
+    private UUID uuid;
 
-    public Notita(int id, long createTimestamp, long modifiedTimestamp, boolean modified, String note) {
+    public Notita(int id, long createTimestamp, long modifiedTimestamp, boolean modified, String uuid, String note) {
         this.id = id;
         this.createTimestamp = createTimestamp;
         this.modifiedTimestamp = modifiedTimestamp;
         this.modified = modified;
         this.note = note;
+        this.uuid = UUID.fromString(uuid);
     }
 
     public void setId(int id) {
@@ -58,5 +62,13 @@ public class Notita {
 
     public String getNote() {
         return note;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 }

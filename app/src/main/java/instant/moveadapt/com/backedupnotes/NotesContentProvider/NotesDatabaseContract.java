@@ -24,6 +24,7 @@ public class NotesDatabaseContract {
         public static final String COLUMN_CREATE_TIMESTAMP = "create_timestamp";
         public static final String COLUMN_MODIFIED_TIMESTAMP = "modified_timestamp";
         public static final String COLUMN_MODIFIED = "modified";
+        public static final String COLUMN_UUID = "uuid";
         public static final String CONTENT_MIME_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + NotesDatabaseContract.AUTHORITY;
     }
 

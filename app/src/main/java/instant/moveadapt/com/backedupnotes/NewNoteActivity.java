@@ -20,9 +20,11 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.UUID;
 
 import instant.moveadapt.com.backedupnotes.ActionMode.ActionModeMonitor;
 import instant.moveadapt.com.backedupnotes.Managers.NoteManager;
+import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
 
 /**
@@ -32,6 +34,7 @@ import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseCon
 public class NewNoteActivity extends AppCompatActivity {
 
     public static final String TAG = "[NEW_NOTE_ACTIVITY]";
+    public static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
 
     private Toolbar toolbar;
     private EditText editText;
@@ -41,12 +44,13 @@ public class NewNoteActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate()");
+
         setContentView(R.layout.activity_new_note_layout);
         toolbar = (Toolbar)findViewById(R.id.new_note_toolbar);
         editText = (EditText)findViewById(R.id.new_note_edit_text);
 
         if (ContextCompat.checkSelfPermission(NewNoteActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(NewNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.READ_WRITE_PERMISSION_REQ_CODE);
+            ActivityCompat.requestPermissions(NewNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
         NotesList.canGo = false;
@@ -107,7 +111,7 @@ public class NewNoteActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == Constants.READ_WRITE_PERMISSION_REQ_CODE){
+        if (requestCode == READ_WRITE_PERMISSION_REQ_CODE){
             int result = grantResults[0];
             if (result == PackageManager.PERMISSION_GRANTED){
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");
@@ -129,14 +133,15 @@ public class NewNoteActivity extends AppCompatActivity {
         vals.put(NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP, modifiedTimestamp);
         vals.put(NotesDatabaseContract.Notite.COLUMN_MODIFIED, modified);
         vals.put(NotesDatabaseContract.Notite.COLUMN_NOTE, note);
+        vals.put(NotesDatabaseContract.Notite.COLUMN_UUID, UUID.randomUUID().toString());
         Uri lastUri = resolver.insert(NotesDatabaseContract.Notite.URI, vals);
-        if (lastUri != null){
+        if (lastUri != null){ 
             int lastId = Integer.parseInt(lastUri.getLastPathSegment());
             ArrayList<Notita> notite = NoteManager.getNotesFromDatabase(getApplicationContext());
             int position = -1;
             Log.d(TAG, "Inserted new note with id = " + lastId);
             //add to the action mode monitor the new note
-            ActionModeMonitor.addNote(NoteManager.getNoteById(getApplicationContext(), lastId));
+//            ActionModeMonitor.addNote(NoteManager.getNoteById(getApplicationContext(), lastId));
         }
         NotesList.canGo = true;
     }

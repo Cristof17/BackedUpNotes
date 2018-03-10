@@ -7,7 +7,7 @@ package instant.moveadapt.com.backedupnotes;
 public class Constants {
 
     public static final String NOTES_FOLDER = "notite";
-    public static final int READ_WRITE_PERMISSION_REQ_CODE = 101;
+
 
     public static final String PREFERENCE_NOTES_STATES = "preference_notes_states";
     public static final String PREFERENCE_NOTE_FOLDER_SESSION_URI = "preference_note_folder_session_uri";

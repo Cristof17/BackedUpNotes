@@ -32,6 +32,7 @@ import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseCon
 public class EditNoteActivity extends AppCompatActivity {
 
     public static final String TAG = "[EDIT_NOTE_ACTIVITY]";
+    private static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
 
     private Toolbar toolbar;
     private EditText editText;
@@ -78,7 +79,7 @@ public class EditNoteActivity extends AppCompatActivity {
         }
 
         if (ContextCompat.checkSelfPermission(EditNoteActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(EditNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Constants.READ_WRITE_PERMISSION_REQ_CODE);
+            ActivityCompat.requestPermissions(EditNoteActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
     }
@@ -155,7 +156,7 @@ public class EditNoteActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == Constants.READ_WRITE_PERMISSION_REQ_CODE){
+        if (requestCode == READ_WRITE_PERMISSION_REQ_CODE){
             int result = grantResults[0];
             if (result == PackageManager.PERMISSION_GRANTED){
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");

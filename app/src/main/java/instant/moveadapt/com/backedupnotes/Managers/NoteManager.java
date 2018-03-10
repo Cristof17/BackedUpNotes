@@ -109,6 +109,7 @@ public class NoteManager {
                 NotesDatabaseContract.Notite.COLUMN_MODIFIED,
                 NotesDatabaseContract.Notite.COLUMN_NOTE,
                 NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP,
+                NotesDatabaseContract.Notite.COLUMN_UUID,
                 NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP};
     }
 
@@ -117,8 +118,9 @@ public class NoteManager {
         long createTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP)));
         long modifyTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP)));
         boolean modified = Boolean.parseBoolean(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED)));
+        String uuid = c.getColumnName(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_UUID));
         String notita = c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_NOTE));
-        return new Notita(id, createTimestamp, modifyTimestamp, modified, notita);
+        return new Notita(id, createTimestamp, modifyTimestamp, modified, uuid, notita);
     }
 
     public static Notita getNotitaByPosition(Context context, int position){
