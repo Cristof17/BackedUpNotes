@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -27,7 +28,7 @@ import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 
-public class NotesList extends AppCompatActivity{
+public class NotesListActivity extends AppCompatActivity{
 
     /*
      * Permission requests code
@@ -60,20 +61,16 @@ public class NotesList extends AppCompatActivity{
             /*
              * Se blocheaza ca sa cer permisiuni
              */
-            ActivityCompat.requestPermissions(NotesList.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
+            ActivityCompat.requestPermissions(NotesListActivity.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
-        /*
-         * TODO Remove this test code
-         */
-        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI, NotesDatabase.DatabaseContract.getTableColumns(), null, null, null);
-        while (c.moveToNext()){
-            String uuid = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID));
-            String note = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
-            String timestamp = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP));
-            Log.d("notes.db", "UUID = " + uuid + " note = " + note + " timestamp = " + timestamp);
-        }
-
+        addButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent startNewNoteIntent = new Intent(getApplicationContext(), NewNoteActivity.class);
+                startActivity(startNewNoteIntent);
+            }
+        });
     }
 
     @Override
@@ -112,11 +109,11 @@ public class NotesList extends AppCompatActivity{
             if (result == PackageManager.PERMISSION_GRANTED){
                 Resources res = getResources();
                 String permissionGrantedMessage = res.getString(R.string.permission_granted_message);
-                Toast.makeText(NotesList.this, permissionGrantedMessage, Toast.LENGTH_LONG).show();
+                Toast.makeText(NotesListActivity.this, permissionGrantedMessage, Toast.LENGTH_LONG).show();
             } else {
                 Resources resources = getResources();
                 String noPermissionWarning = resources.getString(R.string.cannot_upload_warning);
-                Toast.makeText(NotesList.this, noPermissionWarning, Toast.LENGTH_LONG).show();
+                Toast.makeText(NotesListActivity.this, noPermissionWarning, Toast.LENGTH_LONG).show();
             }
         }
     }
