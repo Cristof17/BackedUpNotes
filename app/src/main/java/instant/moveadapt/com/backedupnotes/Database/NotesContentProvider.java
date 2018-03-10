@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 /**
  * Created by cristof on 11.03.2018.
@@ -16,7 +17,6 @@ import android.support.annotation.Nullable;
 public class NotesContentProvider extends ContentProvider {
 
     private  NotesDatabase db;
-
 
     @Override
     public boolean onCreate() {
@@ -57,6 +57,7 @@ public class NotesContentProvider extends ContentProvider {
 
         if (writeableDB != null){
             lastId = writeableDB.insert(NotesDatabase.DatabaseContract.TABLE_NAME, null, values);
+            Log.d(NotesDatabase.DATABASE_NAME, " inserted with last Id = " + lastId);
         }
         /**
          * Don't think will use the return value of the content provider

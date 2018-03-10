@@ -16,13 +16,13 @@ import android.widget.TabHost;
 
 public class NotesDatabase extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "notes.db";
-    private static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "notes.db";
+    private static final int DATABASE_VERSION = 3;
     private static final String CREATE_STATEMENT = new String("CREATE TABLE "
             + DatabaseContract.TABLE_NAME
             + "("
             + DatabaseContract._ID
-            + " text primary key not null, "
+            + " text primary key, "
             + DatabaseContract.COLUMN_TEXT
             + " text not null, "
             + DatabaseContract.COLUMN_TIMESTAMP
@@ -52,12 +52,17 @@ public class NotesDatabase extends SQLiteOpenHelper {
         /**
          * Columns of the database
          */
-        static final String TABLE_NAME = "notes";
-        static final String COLUMN_TEXT = "text";
-        static final String COLUMN_TIMESTAMP = "trimestamp";
+        public static final String TABLE_NAME = "notes";
+        public static final String COLUMN_TEXT = "text";
+        public static final String COLUMN_TIMESTAMP = "trimestamp";
 
         static final String AUTHORITY = "instant.moveadapt.com.backedupnotes";
         static final String CONTENT_MIME_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + AUTHORITY;
-        static final Uri URI = Uri.parse("content://" + AUTHORITY);
+        public static final Uri URI = Uri.parse("content://" + AUTHORITY);
+
+        public static String[] getTableColumns(){
+            String tableColumns[] = new String[] {_ID, COLUMN_TEXT, COLUMN_TIMESTAMP};
+            return tableColumns;
+        }
     }
 }

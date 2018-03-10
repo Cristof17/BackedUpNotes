@@ -1,8 +1,10 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +20,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.storage.StorageMetadata;
+
+import java.util.UUID;
+
+import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
+import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 
 public class NotesList extends AppCompatActivity{
@@ -55,6 +62,18 @@ public class NotesList extends AppCompatActivity{
              */
             ActivityCompat.requestPermissions(NotesList.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
+
+        /*
+         * TODO Remove this test code
+         */
+        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI, NotesDatabase.DatabaseContract.getTableColumns(), null, null, null);
+        while (c.moveToNext()){
+            String uuid = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID));
+            String note = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
+            String timestamp = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP));
+            Log.d("notes.db", "UUID = " + uuid + " note = " + note + " timestamp = " + timestamp);
+        }
+
     }
 
     @Override
@@ -66,7 +85,7 @@ public class NotesList extends AppCompatActivity{
             if (result == PackageManager.PERMISSION_GRANTED){
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");
             } else {
-                Log.d(TAG, "Permission for rd/wr to external storage is denied");
+                Log.d(TAG, "Permission for rd/wr to external storag e is denied");
                 if (messageTextView !=  null && addButton != null && notesRecyclerView != null){
                     addButton.setVisibility(View.INVISIBLE);
                     notesRecyclerView.setVisibility(View.INVISIBLE);
