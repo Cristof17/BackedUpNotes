@@ -10,18 +10,22 @@ import android.util.Log;
  */
 
 public class NotesDatabase extends SQLiteOpenHelper {
+
     public NotesDatabase(Context context) {
         super(context, NotesDatabaseContract.DATABASE_NAME, null, NotesDatabaseContract.DATBASE_VERSION);
     }
 
-
-    public static final String CREATE_NOTES_TABLE_STATEMENT = "CREATE TABLE " + NotesDatabaseContract.Notite.URI + "(" +
-            NotesDatabaseContract.Notite._ID + " integer primary key autoincrement, " +
+    /**
+     * Notes do not have UUID
+     *
+     */
+    public static final String CREATE_NOTES_TABLE_STATEMENT = "CREATE TABLE " + NotesDatabaseContract.Notite.TABLE_NAME + "(" +
+            NotesDatabaseContract.Notite._ID + " text primary key not null, " +
             NotesDatabaseContract.Notite.COLUMN_NOTE + " text not null, " +
             NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP + " integer, " +
+            NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP + " integer," +
             NotesDatabaseContract.Notite.COLUMN_MODIFIED + " text);";
-    public static final String DROP_NOTES_TABLE_STATEMENT = "DROP TABLE IF EXISTS " + NotesDatabaseContract.Notite.TABLE_NAME;
-
+    public static final String DROP_NOTES_TABLE_STATEMENT = "DROP TABLE IF EXISTS " + NotesDatabaseContract.Notite.TABLE_NAME + ";";
 
     @Override
     public void onCreate(SQLiteDatabase db) {

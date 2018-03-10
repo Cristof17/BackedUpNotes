@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.logging.LogManager;
 
 import instant.moveadapt.com.backedupnotes.Constants;
+import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.NotesContentProvider.NotesDatabaseContract;
 import instant.moveadapt.com.backedupnotes.Notita;
 
@@ -26,58 +27,6 @@ import instant.moveadapt.com.backedupnotes.Notita;
 public class NoteManager {
 
     private static final String TAG = "[NOTE_MANAGER]";
-
-    public static final void setNoteState(Context context, int notePosition, int newState){
-        boolean saved = instant.moveadapt.com.backedupnotes.Managers.PreferenceManager.saveNotesStates(context, notePosition, newState);
-        if (saved){
-            Log.d(TAG, "Modified state for note on position " + notePosition + " to " + newState);
-        } else {
-            Log.e(TAG, "Cannot modify state for note on positon " + notePosition + " to" + newState);
-        }
-    }
-
-    public static final ArrayList<Integer> getNotesStates(Context context){
-        return PreferenceManager.getNotesStates(context);
-    }
-
-    public static final int getNoteStateForIndex(Context context, int position){
-        ArrayList<Integer> states = getNotesStates(context);
-        if (states != null) {
-            if (position < 0 || position >= states.size())
-                return Constants.STATE_LOCAL;
-            else
-                return states.get(position);
-        } else {
-            return Constants.STATE_LOCAL;
-        }
-    }
-
-    public static final void deleteNoteState(Context context, int position){
-        ArrayList<Integer> states = PreferenceManager.getNotesStates(context);
-        if (states != null){
-            if (position < 0 || position >= states.size()) {
-            }else {
-                PreferenceManager.deleteStateForPosition(context, position);
-            }
-        }
-    }
-
-    public static void addNoteState(Context context, int newState){
-        PreferenceManager.addState(context, newState);
-    }
-
-    public static File addNote(Context context){
-        File newNote = FileManager.createNewNoteFile(context);
-        addNoteState(context, Constants.STATE_LOCAL);
-        return newNote;
-    }
-
-    public static void setNoteStateByName(Context context, String name, int newState){
-        int fileIndex = FileManager.getFileIndexByName(context, name);
-        if (fileIndex != -1){
-            NoteManager.setNoteState(context, fileIndex, newState);
-        }
-    }
 
     public static Uri getUploadUriByFilename(Context context, String filename){
         Uri returnUri = null;
@@ -126,25 +75,32 @@ public class NoteManager {
 
     public static ArrayList<Notita> getNotesFromDatabase(Context context){
         ArrayList<Notita> notite = new ArrayList<Notita>();
-        ContentResolver resolver = context.getContentResolver();
-        String[] columns = getNotiteTableColumns();
-        Cursor c = resolver.query(NotesDatabaseContract.Notite.URI,
-                columns,
-                null,
-                null,
-                null);
-        if (c == null || c.getCount() == 0){
-            c.close();
-            return null;
-        }
+        try {
+            ContentResolver resolver = context.getContentResolver();
+            String[] columns = getNotiteTableColumns();
+            //do a notes sorting
+//            String sortOrder = NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP + " asc ";
+            String sortOrder = "";
+            Cursor c = resolver.query(NotesDatabaseContract.Notite.URI,
 
-        int numNotes = c.getCount();
-        for (int i = 0; i < numNotes; ++i){
-            c.moveToNext();
-            Notita notitaNoua = convertNotita(c);
-            notite.add(notitaNoua);
+                    columns,
+                    null,
+                    null,
+                    sortOrder);
+            if (c == null || c.getCount() == 0) {
+                return null;
+            }
+
+            int numNotes = c.getCount();
+            for (int i = 0; i < numNotes; ++i) {
+                c.moveToNext();
+                Notita notitaNoua = convertNotita(c);
+                notite.add(notitaNoua);
+            }
+            c.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
-        c.close();
         return notite;
     }
 
@@ -153,6 +109,7 @@ public class NoteManager {
                 NotesDatabaseContract.Notite.COLUMN_MODIFIED,
                 NotesDatabaseContract.Notite.COLUMN_NOTE,
                 NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP,
+                NotesDatabaseContract.Notite.COLUMN_UUID,
                 NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP};
     }
 
@@ -161,8 +118,28 @@ public class NoteManager {
         long createTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_CREATE_TIMESTAMP)));
         long modifyTimestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED_TIMESTAMP)));
         boolean modified = Boolean.parseBoolean(c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_MODIFIED)));
+        String uuid = c.getColumnName(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_UUID));
         String notita = c.getString(c.getColumnIndex(NotesDatabaseContract.Notite.COLUMN_NOTE));
-        return new Notita(id, createTimestamp, modifyTimestamp, modified, notita);
+        return new Notita(id, createTimestamp, modifyTimestamp, modified, uuid, notita);
+    }
+
+    public static Notita getNotitaByPosition(Context context, int position){
+        ArrayList<Notita> notite = getNotesFromDatabase(context);
+        if (notite != null && position <= notite.size() - 1 && position > 0){
+            return notite.get(position);
+        }
+        return null;
+    }
+
+    public static Notita getNoteById(Context context, int id){
+        ArrayList<Notita> notite = getNotesFromDatabase(context);
+        if (notite != null){
+            for(Notita note : notite){
+                if (note.getId() == id)
+                    return note;
+            }
+        }
+        return null;
     }
 
 }
