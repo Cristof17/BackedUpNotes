@@ -1,4 +1,4 @@
-package instant.moveadapt.com.backedupnotes;
+package instant.moveadapt.com.backedupnotes.Pojo;
 
 import java.util.UUID;
 
