@@ -39,19 +39,19 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
     @Override
     public void onBackPressed() {
 
-        /**
-         * Show dialog with save the note
-         */
-        AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
-        builder.setTitle(R.string.save_note_text);
-        builder.setCancelable(false);
-        builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
+        if (textEditText.getText().toString() != null
+                && !textEditText.getText().toString().equals("")) {
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+            /**
+             * Show dialog with save the note
+             */
+            AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
+            builder.setTitle(R.string.save_note_text);
+            builder.setCancelable(false);
+            builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
 
-                if (textEditText.getText().toString() != null
-                        && !textEditText.getText().toString().equals("")) {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
 
                     /*
                      * Show waiting dialog
@@ -71,17 +71,19 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
                     contentValues.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, System.currentTimeMillis());
                     getContentResolver().insert(NotesDatabase.DatabaseContract.URI, contentValues);
                 }
-            }
-        });
+            });
 
-        builder.setNegativeButton(R.string.no_text, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                NewNoteActivity.super.onBackPressed();
-                Log.d("notes.db", "Do not save note");
-            }
-        });
-        builder.create().show();
+            builder.setNegativeButton(R.string.no_text, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    NewNoteActivity.super.onBackPressed();
+                    Log.d("notes.db", "Do not save note");
+                }
+            });
+            builder.create().show();
+        }else{
+            super.onBackPressed();
+        }
     }
 
     /**

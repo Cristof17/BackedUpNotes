@@ -52,6 +52,9 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
     @Override
     public void onBackPressed() {
 
+
+
+
         /**
          * Show dialog with save the note
          */
@@ -63,9 +66,6 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                if (noteTextView.getText().toString() != null
-                        && !noteTextView.getText().toString().equals("")) {
-
                     /*
                      * Show waiting dialog
                      */
@@ -76,6 +76,8 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
                     savingDialog.show();
                     getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI, true, new NotesContentProviderContentObserver(new Handler(), savingDialog, EditNoteActivity.this));
 
+                if (noteTextView.getText().toString() != null
+                        && !noteTextView.getText().toString().equals("")) {
                     /*
                      * Update the new Note
                      */
@@ -86,6 +88,14 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
                     String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
                     String whereArgs[] = new String[]{note.id.toString()};
                     getContentResolver().update(NotesDatabase.DatabaseContract.URI, contentValues, whereClause, whereArgs);
+                }else{
+
+                    /*
+                     * Delete the note
+                     */
+                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+                    String whereArgs[] = new String[]{note.id.toString()};
+                    getContentResolver().delete(NotesDatabase.DatabaseContract.URI, whereClause, whereArgs);
                 }
             }
         });
