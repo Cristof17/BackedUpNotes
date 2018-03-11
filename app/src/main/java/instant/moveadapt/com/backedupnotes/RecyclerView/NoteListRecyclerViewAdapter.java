@@ -30,6 +30,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
      */
     private Cursor cursor;
 
+
     public NoteListRecyclerViewAdapter(Context context){
         this.context = context;
     }
@@ -78,6 +79,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         Note nota = convertToNote(cursor);
         textView.setText(nota.text + "");
 
+        Log.d("notes.db", "doing for position = " + position + " with cursor position = " + cursor.getPosition());
     }
 
     @Override
@@ -103,6 +105,10 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             }
         } else {
             Log.d("notes.db", "cursor size = " + cursor.getCount());
+            if (cursor.getPosition() == cursor.getCount()-1){
+                cursor.moveToFirst();
+                cursor.moveToPrevious();
+            }
             return cursor.getCount();
         }
     }

@@ -3,17 +3,22 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.widget.Toolbar
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/new_note_toolbar">
+        android:layout_height="@dimen/action_bar_size"
+        android:id="@+id/activity_new_note_appbarlayout">
 
-    </android.support.v7.widget.Toolbar>
+        <android.support.v7.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/action_bar_size"
+            android:id="@+id/activity_new_note_toolbar">
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
 
     <ScrollView
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:layout_below="@id/new_note_toolbar">
+        android:layout_below="@id/activity_new_note_appbarlayout">
 
     <EditText
         android:layout_width="match_parent"
@@ -24,10 +29,6 @@
         android:breakStrategy="high_quality"
         android:fontFamily="monospace"
         android:gravity="start"
-        android:shadowColor="@color/colorPrimaryDark"
-        android:shadowDx="2.0"
-        android:shadowDy="2.0"
-        android:padding="10dp"
         />
     </ScrollView>
 

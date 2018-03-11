@@ -20,4 +20,8 @@
     <string name="upload_per_file_text">Bytes transfered</string>
     <string name="save_file_progress_title">Saving note</string>
     <string name="save_file_succesfull">Saved</string>
+    <string name="save_note_text">Save note ?</string>
+    <string name="yes_text">Yes</string>
+    <string name="no_text">No</string>
+    <string name="saving_text">Saving</string>
 </resources>

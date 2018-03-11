@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/notes_list_coordinator_layout"
-    tools:context="instant.moveadapt.com.backedupnotes.NotesList">
+    tools:context="instant.moveadapt.com.backedupnotes.NotesListActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -13,7 +13,8 @@
 
         <android.support.design.widget.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/action_bar_size">
+            android:layout_height="@dimen/action_bar_size"
+            android:id="@+id/activity_notes_list_appbarlayout">
 
             <android.support.v7.widget.Toolbar
                 android:layout_width="match_parent"
@@ -43,8 +44,8 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
-            android:layout_below="@id/activity_notes_list_toolbar"
-            android:layout_height="wrap_content" />
+            android:layout_below="@id/activity_notes_list_appbarlayout"
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
 
