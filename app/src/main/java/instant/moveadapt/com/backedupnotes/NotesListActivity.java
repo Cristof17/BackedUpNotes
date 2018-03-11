@@ -53,7 +53,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private NoteListRecyclerViewAdapter notesAdapter;
 
     private TextView messageTextView;
-    private AppBarLayout toolbar;
+    private AppBarLayout appBarLayout;
+    private Toolbar toolbar;
 
     /*
      * In the adapter the rootViews for each list item
@@ -91,7 +92,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        toolbar = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
+        appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
+        toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -104,6 +106,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
              */
             ActivityCompat.requestPermissions(NotesListActivity.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
+
+        setSupportActionBar(toolbar);
 
         addButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -128,7 +132,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 MenuInflater menuInflater = new MenuInflater(NotesListActivity.this);
                 menuInflater.inflate(R.menu.note_list_contextual_menu, menu);
-                toolbar.setVisibility(View.INVISIBLE);
+                appBarLayout.setVisibility(View.GONE);
                 return true;
             }
 
@@ -143,9 +147,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
                 switch(item.getItemId()){
                     case R.id.note_list_contextual_delete_action:
-                        /**
-                         * TODO Handle deletion of notes
-                         */
                         actionMode.finish();
                         return true;
                     default:
@@ -157,12 +158,20 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 actionMode = null;
-                toolbar.setVisibility(View.VISIBLE);
+                appBarLayout.setVisibility(View.VISIBLE);
 
                 /*
                  * Delete selected notes
                  */
-                for (Note note : notesToDelete);
+                for (Note note : notesToDelete){
+                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+                    String whereArgs[] = new String[] {note.id.toString()};
+                    getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
+                            whereClause,
+                            whereArgs);
+                }
+                notesToDelete.clear();
+                notesAdapter.notifyDataSetChanged();
             }
         };
     }
