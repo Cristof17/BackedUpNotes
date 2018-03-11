@@ -40,6 +40,7 @@ public class NewNoteActivity extends AppCompatActivity {
         builder.setTitle(R.string.save_note_text);
         builder.setCancelable(false);
         builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -60,6 +61,7 @@ public class NewNoteActivity extends AppCompatActivity {
                 NewNoteActivity.super.onBackPressed();
             }
         });
+
         builder.setNegativeButton(R.string.no_text, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

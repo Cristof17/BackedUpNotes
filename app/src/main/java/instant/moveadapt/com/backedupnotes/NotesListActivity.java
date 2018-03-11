@@ -40,10 +40,15 @@ public class NotesListActivity extends AppCompatActivity{
 
     private FloatingActionButton addButton;
     private RecyclerView notesRecyclerView;
+    private NoteListRecyclerViewAdapter notesAdapter;
 
     private TextView messageTextView;
     private LinearLayoutManager llm;
 
+    /*
+     * Execution comes here when the app is started and the activity created
+     *
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +58,8 @@ public class NotesListActivity extends AppCompatActivity{
         addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this);
 
         /*
          *  Request permission for android 6.0 and upwards
@@ -71,6 +78,23 @@ public class NotesListActivity extends AppCompatActivity{
                 startActivity(startNewNoteIntent);
             }
         });
+
+        notesRecyclerView.setAdapter(notesAdapter);
+        /*
+         * from Android documentation
+         */
+        notesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.VERTICAL,false));
+    }
+
+    /*
+     * Execution comes here when the app is already started and the activity
+     * already exists, but needs to go into foreground because it was coverd
+     * by another activity that just finished
+     */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        notesAdapter.notifyDataSetChanged();
     }
 
     @Override
