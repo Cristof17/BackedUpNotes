@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.ActionMode;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -95,15 +96,23 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                     sortOrder);
 
             if (cursor != null) {
+                Log.d("notes.db", "cursor size = " + cursor.getCount());
                 return cursor.getCount();
             } else {
                 return 0;
             }
         } else {
+            Log.d("notes.db", "cursor size = " + cursor.getCount());
             return cursor.getCount();
         }
     }
 
+    public void resetCursor(){
+        if (cursor != null){
+            cursor.close();
+            cursor = null;
+        }
+    }
 
     public class MyViewHolder extends RecyclerView.ViewHolder{
 

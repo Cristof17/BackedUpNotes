@@ -1,24 +1,29 @@
 package instant.moveadapt.com.backedupnotes;
 
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.EditText;
 
 import java.util.UUID;
 
+import instant.moveadapt.com.backedupnotes.Database.ContentObserverCallback;
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
+import instant.moveadapt.com.backedupnotes.Database.NotesContentProviderContentObserver;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 
 /**
  * Created by cristof on 11.03.2018.
  */
 
-public class NewNoteActivity extends AppCompatActivity {
+public class NewNoteActivity extends AppCompatActivity implements ContentObserverCallback{
 
     private EditText textEditText;
 
@@ -46,6 +51,16 @@ public class NewNoteActivity extends AppCompatActivity {
 
                 if (textEditText.getText().toString() != null
                         && !textEditText.getText().toString().equals("")) {
+
+                    /*
+                     * Show waiting dialog
+                     */
+                    AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
+                    builder.setTitle(R.string.saving_text);
+                    builder.setCancelable(false);
+                    AlertDialog savingDialog = builder.create();
+                    savingDialog.show();
+                    getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI, true, new NotesContentProviderContentObserver(new Handler(), savingDialog, NewNoteActivity.this));
                     /*
                      * Insert the new note in the database
                      */
@@ -55,10 +70,6 @@ public class NewNoteActivity extends AppCompatActivity {
                     contentValues.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, System.currentTimeMillis());
                     getContentResolver().insert(NotesDatabase.DatabaseContract.URI, contentValues);
                 }
-                /*
-                 * Resume normal behavior of the app
-                 */
-                NewNoteActivity.super.onBackPressed();
             }
         });
 
@@ -66,8 +77,19 @@ public class NewNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 NewNoteActivity.super.onBackPressed();
+                Log.d("notes.db", "Do not save note");
             }
         });
         builder.create().show();
+    }
+
+    @Override
+    public void finished() {
+         /*
+         * Resume normal behavior of the app after the
+         * data has been saved in the content provideer
+         */
+        NewNoteActivity.super.onBackPressed();
+        Log.d("notes.db", "Save note");
     }
 }

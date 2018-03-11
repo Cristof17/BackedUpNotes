@@ -20,6 +20,7 @@ public class NotesContentProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+
         /**
          * null for db name
          * null for cursor factory
@@ -38,7 +39,12 @@ public class NotesContentProvider extends ContentProvider {
         Cursor c = null;
 
         if (readableDB != null){
-           c = readableDB.query(NotesDatabase.DatabaseContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+            c = readableDB.query(NotesDatabase.DatabaseContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+            /*
+             * If a componenet requests for this cursor, the cursor needs to
+             * have a listener attached for when the underlying data changes
+             */
+            c.setNotificationUri(getContext().getContentResolver(), NotesDatabase.DatabaseContract.URI);
         }
         return c;
     }
@@ -58,6 +64,12 @@ public class NotesContentProvider extends ContentProvider {
         if (writeableDB != null){
             lastId = writeableDB.insert(NotesDatabase.DatabaseContract.TABLE_NAME, null, values);
             Log.d(NotesDatabase.DATABASE_NAME, " inserted with last Id = " + lastId);
+
+            /*
+             * Notify registered contentObserver objects about the modifications of the
+             * underlying data
+             */
+            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
         }
         /**
          * Don't think will use the return value of the content provider
@@ -71,6 +83,12 @@ public class NotesContentProvider extends ContentProvider {
         int deletedRows = -1;
         if (writeableDB != null){
             deletedRows = writeableDB.delete(NotesDatabase.DatabaseContract.TABLE_NAME, selection, selectionArgs);
+
+            /*
+             * Notify registered contentObserver objects about the modifications of the
+             * underlying data
+             */
+            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
         }
         return deletedRows;
     }
@@ -82,6 +100,12 @@ public class NotesContentProvider extends ContentProvider {
 
         if (writeableDB != null){
             updatedRows = writeableDB.update(NotesDatabase.DatabaseContract.TABLE_NAME, values, selection, selectionArgs);
+
+            /*
+             * Notify registered contentObserver objects about the modifications of the
+             * underlying data
+             */
+            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
         }
         return updatedRows;
     }
