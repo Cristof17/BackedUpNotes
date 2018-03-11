@@ -21,7 +21,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".NewNoteActivity"/>
+        <activity android:name=".NewNoteActivity"
+            android:parentActivityName=".NotesListActivity"/>
+
+        <activity android:name=".EditNoteActivity"
+            android:parentActivityName=".NotesListActivity"/>
 
         <provider
             android:authorities="instant.moveadapt.com.backedupnotes"

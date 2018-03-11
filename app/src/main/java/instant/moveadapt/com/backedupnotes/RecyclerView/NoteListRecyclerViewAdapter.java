@@ -2,7 +2,10 @@ package instant.moveadapt.com.backedupnotes.RecyclerView;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.RippleDrawable;
+import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.ActionMode;
@@ -15,6 +18,7 @@ import android.widget.TextView;
 import java.util.UUID;
 
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.EditNoteActivity;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.R;
 
@@ -22,14 +26,13 @@ import instant.moveadapt.com.backedupnotes.R;
  * Created by cristof on 13.06.2017.
  */
 
-public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder>{
+public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> {
 
     private Context context;
     /*
      * This cursor is used to cache notes from database
      */
     private Cursor cursor;
-
 
     public NoteListRecyclerViewAdapter(Context context){
         this.context = context;
@@ -40,12 +43,17 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
         LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View rootView = inflater.inflate(R.layout.note_item_layout, parent, false);
-        MyViewHolder newViewHolder = new MyViewHolder(rootView);
+
+        /*
+         * Note object is null when creating viewHolder
+         * It is initialized at binding time
+         */
+        MyViewHolder newViewHolder = new MyViewHolder(rootView, null);
         return newViewHolder;
     }
 
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
+    public void onBindViewHolder(final MyViewHolder holder, int position) {
 
         View rootView = holder.rootView;
         TextView textView = (TextView) rootView.findViewById(R.id.note_list_item_text_view);
@@ -79,7 +87,24 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         Note nota = convertToNote(cursor);
         textView.setText(nota.text + "");
 
-        Log.d("notes.db", "doing for position = " + position + " with cursor position = " + cursor.getPosition());
+        /*
+         * Set the note for this viewHolder
+         */
+        holder.note = nota;
+
+        /*
+         * Set the listener for this layout
+         */
+        rootView.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
+                Bundle extras = new Bundle();
+                extras.putParcelable("note", holder.note);
+                editNoteIntent.putExtras(extras);
+                context.startActivity(editNoteIntent);
+            }
+        });
     }
 
     @Override
@@ -98,13 +123,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                     sortOrder);
 
             if (cursor != null) {
-                Log.d("notes.db", "cursor size = " + cursor.getCount());
                 return cursor.getCount();
             } else {
                 return 0;
             }
         } else {
-            Log.d("notes.db", "cursor size = " + cursor.getCount());
             if (cursor.getPosition() == cursor.getCount()-1){
                 cursor.moveToFirst();
                 cursor.moveToPrevious();
@@ -123,10 +146,12 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     public class MyViewHolder extends RecyclerView.ViewHolder{
 
         public View rootView;
+        public Note note;
 
-        public MyViewHolder(View v){
+        public MyViewHolder(View v, Note note){
             super(v);
             this.rootView = v;
+            this.note = note;
         }
     }
 

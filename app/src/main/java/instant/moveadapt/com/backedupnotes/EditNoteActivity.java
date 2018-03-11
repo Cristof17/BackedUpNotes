@@ -5,35 +5,48 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.UUID;
 
 import instant.moveadapt.com.backedupnotes.Database.ContentObserverCallback;
-import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProviderContentObserver;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.Pojo.Note;
 
 /**
  * Created by cristof on 11.03.2018.
  */
 
-public class NewNoteActivity extends AppCompatActivity implements ContentObserverCallback{
+public class EditNoteActivity extends AppCompatActivity implements ContentObserverCallback{
 
-    private EditText textEditText;
+    EditText noteTextView;
+    Note note;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_new_note_layout);
-        textEditText = (EditText) findViewById(R.id.new_note_edit_text);
+        noteTextView = (EditText) findViewById(R.id.new_note_edit_text);
 
+        /*
+         * Get the note
+         */
+        Bundle extras = getIntent().getExtras();
+        if (extras != null){
+            note = extras.getParcelable("note");
+        }else{
+            Toast.makeText(EditNoteActivity.this, "Error with the app; Cannot edit note", Toast.LENGTH_LONG).show();
+            finish();
+        }
+
+        noteTextView.setText(note.text);
     }
 
     @Override
@@ -42,7 +55,7 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
         /**
          * Show dialog with save the note
          */
-        AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditNoteActivity.this);
         builder.setTitle(R.string.save_note_text);
         builder.setCancelable(false);
         builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
@@ -50,26 +63,29 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                if (textEditText.getText().toString() != null
-                        && !textEditText.getText().toString().equals("")) {
+                if (noteTextView.getText().toString() != null
+                        && !noteTextView.getText().toString().equals("")) {
 
                     /*
                      * Show waiting dialog
                      */
-                    AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(EditNoteActivity.this);
                     builder.setTitle(R.string.saving_text);
                     builder.setCancelable(false);
                     AlertDialog savingDialog = builder.create();
                     savingDialog.show();
-                    getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI, true, new NotesContentProviderContentObserver(new Handler(), savingDialog, NewNoteActivity.this));
+                    getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI, true, new NotesContentProviderContentObserver(new Handler(), savingDialog, EditNoteActivity.this));
+
                     /*
-                     * Insert the new note in the database
+                     * Update the new Note
                      */
                     ContentValues contentValues = new ContentValues();
-                    contentValues.put(NotesDatabase.DatabaseContract._ID, UUID.randomUUID().toString());
-                    contentValues.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, textEditText.getText().toString());
+                    contentValues.put(NotesDatabase.DatabaseContract._ID, note.id.toString());
+                    contentValues.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, noteTextView.getText().toString());
                     contentValues.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, System.currentTimeMillis());
-                    getContentResolver().insert(NotesDatabase.DatabaseContract.URI, contentValues);
+                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+                    String whereArgs[] = new String[]{note.id.toString()};
+                    getContentResolver().update(NotesDatabase.DatabaseContract.URI, contentValues, whereClause, whereArgs);
                 }
             }
         });
@@ -77,7 +93,7 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
         builder.setNegativeButton(R.string.no_text, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                NewNoteActivity.super.onBackPressed();
+                EditNoteActivity.super.onBackPressed();
                 Log.d("notes.db", "Do not save note");
             }
         });
@@ -94,6 +110,6 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
          * Resume normal behavior of the app after the
          * data has been saved in the content provideer
          */
-        NewNoteActivity.super.onBackPressed();
+        EditNoteActivity.super.onBackPressed();
     }
 }
