@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.EditNoteActivity;
+import instant.moveadapt.com.backedupnotes.NewNoteActivity;
+import instant.moveadapt.com.backedupnotes.NotesListActivity;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.R;
 
@@ -28,14 +30,17 @@ import instant.moveadapt.com.backedupnotes.R;
 
 public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> {
 
-    private Context context;
+    private NotesListActivity context;
     /*
      * This cursor is used to cache notes from database
      */
     private Cursor cursor;
 
-    public NoteListRecyclerViewAdapter(Context context){
+    private SelectedRecyclerViewItemCallback selectedItemCallback;
+
+    public NoteListRecyclerViewAdapter(NotesListActivity context, SelectedRecyclerViewItemCallback selectedItemCallback){
         this.context = context;
+        this.selectedItemCallback = selectedItemCallback;
     }
 
     @Override
@@ -55,7 +60,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
 
-        View rootView = holder.rootView;
+        final View rootView = holder.rootView;
         TextView textView = (TextView) rootView.findViewById(R.id.note_list_item_text_view);
 
         /*
@@ -93,16 +98,52 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         holder.note = nota;
 
         /*
-         * Set the listener for this layout
+         * Set the click listener for this layout
          */
         rootView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
-                Bundle extras = new Bundle();
-                extras.putParcelable("note", holder.note);
-                editNoteIntent.putExtras(extras);
-                context.startActivity(editNoteIntent);
+
+                /*
+                 * Check if the action mode has been fired
+                 *
+                 * If it hasn't been fired
+                 */
+                if (context.actionMode == null) {
+                    Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
+                    Bundle extras = new Bundle();
+                    extras.putParcelable("note", holder.note);
+                    editNoteIntent.putExtras(extras);
+                    context.startActivity(editNoteIntent);
+                }else{
+
+                    /*
+                     * Action mode has been fired
+                     *
+                     */
+                    rootView.setSelected(!rootView.isSelected());
+                    if (rootView.isSelected()){
+                        selectedItemCallback.addNoteForDeletion(holder.note);
+                    }else{
+                        selectedItemCallback.removeNoteFromDeletion(holder.note);
+                    }
+                }
+            }
+        });
+
+        /*
+         * Set the long click listener for this item
+         */
+        rootView.setOnLongClickListener(new View.OnLongClickListener(){
+            @Override
+            public boolean onLongClick(View v) {
+
+                if (context.actionMode == null){
+                    context.actionMode = context.startActionMode(context.actionModeCallback);
+                    rootView.setSelected(true);
+                    selectedItemCallback.addNoteForDeletion(holder.note);
+                }
+                return true;
             }
         });
     }

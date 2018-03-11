@@ -52,9 +52,6 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
     @Override
     public void onBackPressed() {
 
-
-
-
         /**
          * Show dialog with save the note
          */

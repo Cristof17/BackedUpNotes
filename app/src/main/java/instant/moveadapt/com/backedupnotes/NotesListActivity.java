@@ -7,14 +7,21 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.ArraySet;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
@@ -22,13 +29,16 @@ import android.widget.Toast;
 
 import com.google.firebase.storage.StorageMetadata;
 
+import java.util.Set;
 import java.util.UUID;
 
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
+import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
-public class NotesListActivity extends AppCompatActivity{
+public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback{
 
     /*
      * Permission requests code
@@ -43,7 +53,30 @@ public class NotesListActivity extends AppCompatActivity{
     private NoteListRecyclerViewAdapter notesAdapter;
 
     private TextView messageTextView;
-    private LinearLayoutManager llm;
+    private AppBarLayout toolbar;
+
+    /*
+     * In the adapter the rootViews for each list item
+     * has a click listener attached which if the
+     * action mode is active marks a note
+     * to be deleted from database
+     *
+     * The action of deletion is implemented in this class
+     * and the addDeviceForDeletion and removeDeviceForDeletion
+     * methods fire from the adapter and suggest which Notes
+     * ought to be deleted when the actionMode delete button is
+     * pressed
+     *
+     * notesToDelete is the set of notes marked for deletion
+     */
+    private Set<Note> notesToDelete;
+    /*
+     * The actionMode object which controls when the actionMode finishes
+     * by calling its' finish() method
+     *
+     */
+    public ActionMode actionMode;
+    public ActionMode.Callback actionModeCallback;
 
     /*
      * Execution comes here when the app is started and the activity created
@@ -58,8 +91,9 @@ public class NotesListActivity extends AppCompatActivity{
         addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        toolbar = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
 
-        notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this);
+        notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
         /*
          *  Request permission for android 6.0 and upwards
@@ -80,14 +114,61 @@ public class NotesListActivity extends AppCompatActivity{
         });
 
         notesRecyclerView.setAdapter(notesAdapter);
+
         /*
          * from Android documentation
          */
         notesRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.VERTICAL,false));
+
+        /*
+         * Init actionModeCallback
+         */
+        actionModeCallback = new ActionMode.Callback() {
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                MenuInflater menuInflater = new MenuInflater(NotesListActivity.this);
+                menuInflater.inflate(R.menu.note_list_contextual_menu, menu);
+                toolbar.setVisibility(View.INVISIBLE);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                Log.d("notes.db", "Action Mode is ");
+                return false;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+
+                switch(item.getItemId()){
+                    case R.id.note_list_contextual_delete_action:
+                        /**
+                         * TODO Handle deletion of notes
+                         */
+                        actionMode.finish();
+                        return true;
+                    default:
+                        //do nothing
+                }
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                actionMode = null;
+                toolbar.setVisibility(View.VISIBLE);
+
+                /*
+                 * Delete selected notes
+                 */
+                for (Note note : notesToDelete);
+            }
+        };
     }
 
     /*
-     * Execution comes here when the app is already started and the activity
+     * Execution comes here when the app is already starremoveted and the activity
      * already exists, but needs to go into foreground because it was coverd
      * by another activity that just finished
      */
@@ -142,5 +223,23 @@ public class NotesListActivity extends AppCompatActivity{
                 Toast.makeText(NotesListActivity.this, noPermissionWarning, Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @Override
+    public void addNoteForDeletion(Note note) {
+        if (notesToDelete == null){
+            notesToDelete = new ArraySet<>();
+        }
+        notesToDelete.add(note);
+        Log.d("note.db", "Marked for deletion " + note.text);
+    }
+
+    @Override
+    public void removeNoteFromDeletion(Note note) {
+        notesToDelete.remove(note);
+        if (notesToDelete.size() == 0){
+            actionMode.finish();
+        }
+        Log.d("note.db", "Removed from deletion " + note.text);
     }
 }

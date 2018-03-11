@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes.Pojo;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 import java.util.UUID;
 
@@ -9,7 +10,7 @@ import java.util.UUID;
  * Created by cristof on 16.08.2017.
  */
 
-public class Note implements Parcelable{
+public class Note implements Parcelable, Comparable<Note>{
 
     public UUID id;
     public String text;
@@ -58,4 +59,9 @@ public class Note implements Parcelable{
                     return new Note[size];
                 }
             };
+
+    @Override
+    public int compareTo(@NonNull Note o) {
+        return id.toString().compareTo(o.text.toString());
+    }
 }
