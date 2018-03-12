@@ -152,6 +152,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
     public int getItemCount() {
 
         if (cursor == null) {
+
             /*
              * Query the database to get the number of notes stored on the phone
              */

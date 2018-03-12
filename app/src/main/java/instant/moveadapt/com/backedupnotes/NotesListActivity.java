@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -12,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.ArraySet;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -23,14 +25,25 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.storage.StorageMetadata;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
@@ -56,6 +69,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private AppBarLayout appBarLayout;
     private Toolbar toolbar;
 
+    private Button loginButton;
+    private Button codeButton;
+
     /*
      * In the adapter the rootViews for each list item
      * has a click listener attached which if the
@@ -80,6 +96,27 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public ActionMode.Callback actionModeCallback;
 
     /*
+     * Firebase auth object (this is the object used to authenticate using
+     * credential object)
+     */
+    FirebaseAuth mAuth;
+
+    /*
+     * Firebase authentication callbacks
+     */
+    private PhoneAuthProvider.OnVerificationStateChangedCallbacks onVerificationStateChangedCallbacks;
+
+    /*
+     * Verification ID for the phone request returned in onCodeSent
+     */
+    private String verificationID;
+
+    /*
+     * Resend token (don't know what this is used for yet
+     */
+    private PhoneAuthProvider.ForceResendingToken resendToken;
+
+    /*
      * Execution comes here when the app is started and the activity created
      *
      */
@@ -94,6 +131,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
         toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
+        loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
+        codeButton = (Button) findViewById(R.id.notes_list_activity_code_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -114,6 +153,101 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public void onClick(View v) {
                 Intent startNewNoteIntent = new Intent(getApplicationContext(), NewNoteActivity.class);
                 startActivity(startNewNoteIntent);
+            }
+        });
+
+        codeButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(NotesListActivity.this);
+                final EditText codeEditText = new EditText(NotesListActivity.this);
+                builder.setView(codeEditText);
+                builder.setTitle("Enter verification code");
+                builder.setPositiveButton("Verify", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        String code = codeEditText.getText().toString();
+
+                        if (mAuth != null){
+                            PhoneAuthCredential phoneCredential = PhoneAuthProvider.getCredential(verificationID, code);
+                            mAuth.signInWithCredential(phoneCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    if (task.isSuccessful()){
+                                        FirebaseUser user = mAuth.getCurrentUser();
+                                        Log.d(TAG, "Logged in using " +  user.getPhoneNumber());
+                                    }else{
+                                        Log.e(TAG, "Login using phone number failed");
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                builder.create().show();
+
+            }
+        });
+
+        onVerificationStateChangedCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            @Override
+            public void onVerificationCompleted(PhoneAuthCredential phoneAuthCredential) {
+                Log.i(TAG, "Verification completed");
+            }
+
+            @Override
+            public void onVerificationFailed(FirebaseException e) {
+                Log.e(TAG, "Verification failed " + e.getMessage());
+            }
+
+            @Override
+            public void onCodeSent(String s, PhoneAuthProvider.ForceResendingToken forceResendingToken) {
+                super.onCodeSent(s, forceResendingToken);
+                Log.d(TAG, "Code sent");
+                verificationID = s;
+                resendToken = forceResendingToken;
+            }
+
+            @Override
+            public void onCodeAutoRetrievalTimeOut(String s) {
+                super.onCodeAutoRetrievalTimeOut(s);
+            }
+        };
+
+        loginButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                final EditText phoneNumberEditText= new EditText(NotesListActivity.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(NotesListActivity.this);
+                builder.setTitle("Phone number");
+                builder.setView(phoneNumberEditText);
+                builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                                phoneNumberEditText.getText().toString(),
+                                120,
+                                TimeUnit.SECONDS,
+                                NotesListActivity.this,
+                                onVerificationStateChangedCallbacks);
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+                builder.create().show();
             }
         });
 
@@ -174,6 +308,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 notesAdapter.notifyDataSetChanged();
             }
         };
+
+        mAuth = FirebaseAuth.getInstance();
     }
 
     /*
