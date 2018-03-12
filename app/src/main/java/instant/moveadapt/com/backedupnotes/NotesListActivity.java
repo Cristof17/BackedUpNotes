@@ -306,6 +306,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onDestroyActionMode(ActionMode mode) {
                 actionMode = null;
+                notesAdapter.resetCursor();
                 appBarLayout.setVisibility(View.VISIBLE);
 
                 notesToDelete.clear();
@@ -314,6 +315,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         };
 
         mAuth = FirebaseAuth.getInstance();
+
+        //TODO Remove later
+        loginButton.setVisibility(View.INVISIBLE);
+        codeButton.setVisibility(View.INVISIBLE);
     }
 
     /*
@@ -323,20 +328,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
      */
     @Override
     protected void onRestart() {
-        super.onRestart();                /*
-                 * Delete selected notes
-                 */
-                for (Note note : notesToDelete){
-                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
-                    String whereArgs[] = new String[] {note.id.toString()};
-                    getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
-                            whereClause,
-                            whereArgs);
-                }
+        super.onRestart();
 
         notesAdapter.resetCursor();
         notesAdapter.notifyDataSetChanged();
     }
+
     //TODO Remove
     void addData(){
         for (int i = 0; i < 30; ++i) {
@@ -410,6 +407,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     public boolean isSelected(Note note){
+
         if (notesToDelete == null){
             return false; //there is no note marked
         }
