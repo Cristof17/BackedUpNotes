@@ -1,10 +1,12 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
@@ -12,6 +14,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.TypedArrayUtils;
 import android.support.v4.util.ArraySet;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -40,7 +43,11 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.storage.StorageMetadata;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -123,7 +130,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Log.d(TAG, "onCreate()");
 
         //TODO
 //        addData();
@@ -319,6 +326,33 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         //TODO Remove later
         loginButton.setVisibility(View.INVISIBLE);
         codeButton.setVisibility(View.INVISIBLE);
+
+        /*
+         * Restore the state
+         */
+        if (savedInstanceState != null){
+
+            Gson gson = new Gson();
+            String notesToDeleteJson = (String) savedInstanceState.get("notesToDelete");
+            if (notesToDeleteJson != null && !notesToDeleteJson.equals("")){
+
+                Type collectionType = new TypeToken<Set<Note>>() {}.getType();
+                notesToDelete = gson.fromJson(notesToDeleteJson, collectionType);
+            }else{
+                Log.e(TAG, "Cannot restore notesToDelete, string in bundle is null");
+            }
+
+            boolean isActionModeActive = (boolean) savedInstanceState.get("actionMode");
+
+            if (isActionModeActive){
+                actionMode = startActionMode(actionModeCallback);
+            }else{
+                Log.e(TAG, "Action Mode is null");
+            }
+
+            notesAdapter.resetCursor();
+            notesAdapter.notifyDataSetChanged();
+        }
     }
 
     /*
@@ -329,6 +363,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     protected void onRestart() {
         super.onRestart();
+        Log.d(TAG, "onRestart()");
 
         notesAdapter.resetCursor();
         notesAdapter.notifyDataSetChanged();
@@ -391,6 +426,19 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        switch (newConfig.orientation){
+            case Configuration.ORIENTATION_LANDSCAPE:
+                Log.d(TAG, "Landscape");
+                break;
+            case Configuration.ORIENTATION_PORTRAIT:
+                Log.d(TAG, "Portrait");
+                break;
+        }
+    }
+
+    @Override
     public void addNoteForDeletion(Note note) {
         if (notesToDelete == null){
             notesToDelete = new ArraySet<>();
@@ -413,5 +461,15 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
         boolean contains = notesToDelete.contains(note);
         return notesToDelete.contains(note);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSavedInstanceState()");
+        Gson gson = new Gson();
+        String notesToDeleteJson = gson.toJson(notesToDelete);
+        outState.putString("notesToDelete", notesToDeleteJson);
+        outState.putBoolean("actionMode", actionMode != null);
     }
 }
