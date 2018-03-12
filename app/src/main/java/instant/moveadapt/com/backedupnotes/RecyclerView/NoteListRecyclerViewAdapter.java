@@ -71,7 +71,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             /*
              * Query the database to get the number of notes stored on the phone
              */
-            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " DESC ";
+            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " ASC ";
             cursor = context.getContentResolver().query(
                     NotesDatabase.DatabaseContract.URI,
                     NotesDatabase.DatabaseContract.getTableColumns(),
@@ -85,12 +85,10 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
          * wheather or not the cursor has no elements, it has to move
          * to 0 from -1
          */
-        do{
-            cursor.moveToNext();
-        }while (cursor.getPosition() == position-1);
+        cursor.moveToPosition(position);
 
         Note nota = convertToNote(cursor);
-        textView.setText(nota.text + "");
+        textView.setText(nota.timestamp %1000000 + " " + nota.text);
 
         /*
          * Set the note for this viewHolder
@@ -146,6 +144,12 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                 return true;
             }
         });
+
+        if (context.isSelected(nota)){
+            rootView.setSelected(true);
+        }else{
+            rootView.setSelected(false);
+        }
     }
 
     @Override
@@ -156,7 +160,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             /*
              * Query the database to get the number of notes stored on the phone
              */
-            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " DESC ";
+            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " ASC ";
             cursor = context.getContentResolver().query(
                     NotesDatabase.DatabaseContract.URI,
                     NotesDatabase.DatabaseContract.getTableColumns(),

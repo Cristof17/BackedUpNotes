@@ -3,6 +3,7 @@ package instant.moveadapt.com.backedupnotes.Pojo;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.UUID;
 
@@ -14,7 +15,7 @@ public class Note implements Parcelable, Comparable<Note>{
 
     public UUID id;
     public String text;
-    public long timestamp;
+    public Long timestamp;
 
     public Note(UUID id, String text, long timestamp) {
         this.id = id;
@@ -62,6 +63,26 @@ public class Note implements Parcelable, Comparable<Note>{
 
     @Override
     public int compareTo(@NonNull Note o) {
-        return id.toString().compareTo(o.text.toString());
+        return id.toString().compareTo(o.id.toString());
+    }
+
+    @Override
+    public boolean equals(Object note) {
+        boolean contains = this.id.toString().equals( ((Note) note).id.toString());
+        return contains;
+    }
+
+    /**
+     * Hash code must be overriden because if we leave it the same
+     * we don't know if the default implementation creates hashes ONLY based on  the
+     * fields in this class, So two Notes might return different hashes for the same
+     * field values for fields (id, text, timestamp) because it may add other hashes from
+     * object class which may not be the same
+     *
+     * @return
+     */
+    @Override
+    public int hashCode() {
+        return 37 * id.hashCode() + text.hashCode() + timestamp.hashCode();
     }
 }

@@ -124,6 +124,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        //TODO
+//        addData();
+
         setContentView(R.layout.activity_notes_list);
 
         addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
@@ -281,6 +285,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
                 switch(item.getItemId()){
                     case R.id.note_list_contextual_delete_action:
+                        /*
+                         * Delete selected notes
+                         */
+                        for (Note note : notesToDelete){
+                            String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+                            String whereArgs[] = new String[] {note.id.toString()};
+                            getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
+                                    whereClause,
+                                    whereArgs);
+                        }
                         actionMode.finish();
                         return true;
                     default:
@@ -294,16 +308,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 actionMode = null;
                 appBarLayout.setVisibility(View.VISIBLE);
 
-                /*
-                 * Delete selected notes
-                 */
-                for (Note note : notesToDelete){
-                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
-                    String whereArgs[] = new String[] {note.id.toString()};
-                    getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
-                            whereClause,
-                            whereArgs);
-                }
                 notesToDelete.clear();
                 notesAdapter.notifyDataSetChanged();
             }
@@ -319,10 +323,29 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
      */
     @Override
     protected void onRestart() {
-        super.onRestart();
+        super.onRestart();                /*
+                 * Delete selected notes
+                 */
+                for (Note note : notesToDelete){
+                    String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+                    String whereArgs[] = new String[] {note.id.toString()};
+                    getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
+                            whereClause,
+                            whereArgs);
+                }
 
         notesAdapter.resetCursor();
         notesAdapter.notifyDataSetChanged();
+    }
+    //TODO Remove
+    void addData(){
+        for (int i = 0; i < 30; ++i) {
+            ContentValues vals = new ContentValues();
+            vals.put(NotesDatabase.DatabaseContract._ID, UUID.randomUUID().toString());
+            vals.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, System.currentTimeMillis());
+            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, "Note " + i);
+            getContentResolver().insert(NotesDatabase.DatabaseContract.URI, vals);
+        }
     }
 
     @Override
@@ -376,7 +399,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             notesToDelete = new ArraySet<>();
         }
         notesToDelete.add(note);
-        Log.d("note.db", "Marked for deletion " + note.text);
     }
 
     @Override
@@ -385,6 +407,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         if (notesToDelete.size() == 0){
             actionMode.finish();
         }
-        Log.d("note.db", "Removed from deletion " + note.text);
+    }
+
+    public boolean isSelected(Note note){
+        if (notesToDelete == null){
+            return false; //there is no note marked
+        }
+        boolean contains = notesToDelete.contains(note);
+        return notesToDelete.contains(note);
     }
 }
