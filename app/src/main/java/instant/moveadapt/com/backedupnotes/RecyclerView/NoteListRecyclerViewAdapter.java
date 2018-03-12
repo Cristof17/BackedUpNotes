@@ -71,7 +71,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             /*
              * Query the database to get the number of notes stored on the phone
              */
-            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " ASC ";
+            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " DESC ";
             cursor = context.getContentResolver().query(
                     NotesDatabase.DatabaseContract.URI,
                     NotesDatabase.DatabaseContract.getTableColumns(),
@@ -160,7 +160,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
             /*
              * Query the database to get the number of notes stored on the phone
              */
-            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " ASC ";
+            String sortOrder = NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP + " DESC ";
             cursor = context.getContentResolver().query(
                     NotesDatabase.DatabaseContract.URI,
                     NotesDatabase.DatabaseContract.getTableColumns(),

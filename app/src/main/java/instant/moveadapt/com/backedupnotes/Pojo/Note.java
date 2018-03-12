@@ -17,9 +17,39 @@ public class Note implements Parcelable, Comparable<Note>{
     public String text;
     public Long timestamp;
 
+    public Note(){
+        this.id = null;
+        this.text = null;
+        this.timestamp = null;
+    }
+
     public Note(UUID id, String text, long timestamp) {
         this.id = id;
         this.text = text;
+        this.timestamp = timestamp;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 

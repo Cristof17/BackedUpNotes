@@ -42,7 +42,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
-import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -78,6 +79,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     private Button loginButton;
     private Button codeButton;
+    private Button uploadButton;
+
 
     /*
      * In the adapter the rootViews for each list item
@@ -144,6 +147,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
         loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
         codeButton = (Button) findViewById(R.id.notes_list_activity_code_btn);
+        uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -204,6 +208,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 });
                 builder.create().show();
 
+            }
+        });
+
+        uploadButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                DatabaseReference notesDb = db.getReference();
+                saveNotesToCloud(notesDb);
             }
         });
 
@@ -301,6 +315,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
                                     whereClause,
                                     whereArgs);
+                            deleteNoteFromCloud(note);
+
                         }
                         actionMode.finish();
                         return true;
@@ -471,5 +487,48 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         String notesToDeleteJson = gson.toJson(notesToDelete);
         outState.putString("notesToDelete", notesToDeleteJson);
         outState.putBoolean("actionMode", actionMode != null);
+    }
+
+    public void saveNotesToCloud(DatabaseReference db){
+        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
+                NotesDatabase.DatabaseContract.getTableColumns(),
+                null,
+                null,
+                null);
+
+        if (c != null){
+            do {
+                c.moveToNext();
+                Note currNote = convertToNote(c);
+                DatabaseReference ref = db.child("0721858913").child(currNote.id.toString());
+                ref.setValue(currNote);
+            }while(!c.isLast());
+            Log.d(TAG, "Uploaded notes");
+        }else{
+            Toast.makeText(getApplicationContext(), "No notes to save ", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void deleteNoteFromCloud( Note note){
+
+        FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
+        DatabaseReference db = firebaseDb.getReference();
+
+        DatabaseReference userRef = db.child("0721858913");
+        userRef.child(note.id.toString()).removeValue();
+    }
+
+    private Note convertToNote(Cursor c){
+        if (c == null){
+            return null;
+        }
+        Note n = null;
+
+        String text = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
+        long timestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP)));
+        UUID id = UUID.fromString(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID)));
+        n = new Note(id, text, timestamp);
+
+        return n;
     }
 }
