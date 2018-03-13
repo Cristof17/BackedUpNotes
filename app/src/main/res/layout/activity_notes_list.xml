@@ -37,7 +37,7 @@
                     android:id="@+id/notes_list_activity_upload_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Upload"/>
+                    android:text="Save"/>
 
             </android.support.v7.widget.Toolbar>
         </android.support.design.widget.AppBarLayout>

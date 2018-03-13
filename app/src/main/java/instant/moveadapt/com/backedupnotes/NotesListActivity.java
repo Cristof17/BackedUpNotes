@@ -42,8 +42,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -127,6 +130,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private PhoneAuthProvider.ForceResendingToken resendToken;
 
     /*
+     * Firebase updatedValue listener
+     */
+    private ValueEventListener databaseValueListener;
+
+    /*
      * Execution comes here when the app is started and the activity created
      *
      */
@@ -186,17 +194,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
                         if (mAuth != null){
                             PhoneAuthCredential phoneCredential = PhoneAuthProvider.getCredential(verificationID, code);
-                            mAuth.signInWithCredential(phoneCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<AuthResult> task) {
-                                    if (task.isSuccessful()){
-                                        FirebaseUser user = mAuth.getCurrentUser();
-                                        Log.d(TAG, "Logged in using " +  user.getPhoneNumber());
-                                    }else{
-                                        Log.e(TAG, "Login using phone number failed");
-                                    }
-                                }
-                            });
+                            signIn(phoneCredential);
                         }
                     }
                 });
@@ -224,7 +222,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         onVerificationStateChangedCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(PhoneAuthCredential phoneAuthCredential) {
-                Log.i(TAG, "Verification completed");
+                Log.i(TAG, "Verification completed " + phoneAuthCredential.getProvider());
+                signIn(phoneAuthCredential);
             }
 
             @Override
@@ -340,8 +339,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         mAuth = FirebaseAuth.getInstance();
 
         //TODO Remove later
-        loginButton.setVisibility(View.INVISIBLE);
-        codeButton.setVisibility(View.INVISIBLE);
+//        loginButton.setVisibility(View.INVISIBLE);
+//        codeButton.setVisibility(View.INVISIBLE);
 
         /*
          * Restore the state
@@ -369,6 +368,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             notesAdapter.resetCursor();
             notesAdapter.notifyDataSetChanged();
         }
+
+        databaseValueListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Error : " + databaseError.getMessage());
+            }
+        };
     }
 
     /*
@@ -455,6 +466,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy()");
+        FirebaseAuth.getInstance().signOut();
+    }
+
+    @Override
     public void addNoteForDeletion(Note note) {
         if (notesToDelete == null){
             notesToDelete = new ArraySet<>();
@@ -500,7 +518,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             do {
                 c.moveToNext();
                 Note currNote = convertToNote(c);
-                DatabaseReference ref = db.child("0721858913").child(currNote.id.toString());
+                DatabaseReference ref = db.child("+40721858913").child(currNote.id.toString());
                 ref.setValue(currNote);
             }while(!c.isLast());
             Log.d(TAG, "Uploaded notes");
@@ -513,9 +531,24 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
         DatabaseReference db = firebaseDb.getReference();
+        db.addValueEventListener(databaseValueListener);
 
-        DatabaseReference userRef = db.child("0721858913");
+        DatabaseReference userRef = db.child("+40721858913");
         userRef.child(note.id.toString()).removeValue();
+    }
+
+    private void signIn(PhoneAuthCredential phoneCredential){
+        mAuth.signInWithCredential(phoneCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful()){
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    Log.d(TAG, "Logged in using " +  user.getPhoneNumber());
+                }else{
+                    Log.e(TAG, "Login using phone number failed");
+                }
+            }
+        });
     }
 
     private Note convertToNote(Cursor c){
