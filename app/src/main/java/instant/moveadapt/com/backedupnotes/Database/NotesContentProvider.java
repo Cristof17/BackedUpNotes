@@ -62,14 +62,33 @@ public class NotesContentProvider extends ContentProvider {
         long lastId = -1;
 
         if (writeableDB != null){
-            lastId = writeableDB.insert(NotesDatabase.DatabaseContract.TABLE_NAME, null, values);
-            Log.d(NotesDatabase.DATABASE_NAME, " inserted with last Id = " + lastId);
 
-            /*
-             * Notify registered contentObserver objects about the modifications of the
-             * underlying data
+            /**
+             * Check if it needs to be inserted in the deleteTable or
+             * notesTable
              */
-            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+
+
+            if (uri.equals(NotesDatabase.DatabaseContract.URI)){
+                lastId = writeableDB.insert(NotesDatabase.DatabaseContract.TABLE_NAME, null, values);
+                Log.d(NotesDatabase.DATABASE_NAME, " inserted with last Id = " + lastId);
+
+                /*
+                 * Notify registered contentObserver objects about the modifications of the
+                 * underlying data
+                 */
+                getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+            } else if (uri.equals(NotesDatabase.DeleteNotesContract.URI)){
+                lastId = writeableDB.insert(NotesDatabase.DeleteNotesContract.TABLE_NAME, null, values);
+                Log.d(NotesDatabase.DATABASE_NAME, " inserted with last Id = " + lastId);
+
+                /*
+                 * Notify registered contentObserver objects about the modifications of the
+                 * underlying data
+                 */
+                getContext().getContentResolver().notifyChange(NotesDatabase.DeleteNotesContract.URI, null);
+            }
+
         }
         /**
          * Don't think will use the return value of the content provider
@@ -83,13 +102,28 @@ public class NotesContentProvider extends ContentProvider {
 
         int deletedRows = -1;
         if (writeableDB != null){
-            deletedRows = writeableDB.delete(NotesDatabase.DatabaseContract.TABLE_NAME, selection, selectionArgs);
+
+            /**
+             * Check if it needs to be inserted in the deleteTable or
+             * notesTable
+             */
+            if (uri.equals(NotesDatabase.DatabaseContract.URI)){
+                deletedRows = writeableDB.delete(NotesDatabase.DatabaseContract.TABLE_NAME, selection, selectionArgs);
 
             /*
              * Notify registered contentObserver objects about the modifications of the
              * underlying data
              */
-            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+                getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+            } else if (uri.equals(NotesDatabase.DeleteNotesContract.URI)){
+                deletedRows = writeableDB.delete(NotesDatabase.DeleteNotesContract.TABLE_NAME, selection, selectionArgs);
+
+            /*
+             * Notify registered contentObserver objects about the modifications of the
+             * underlying data
+             */
+                getContext().getContentResolver().notifyChange(NotesDatabase.DeleteNotesContract.URI, null);
+            }
         }
         return deletedRows;
     }
@@ -100,13 +134,27 @@ public class NotesContentProvider extends ContentProvider {
         int updatedRows = -1;
 
         if (writeableDB != null){
-            updatedRows = writeableDB.update(NotesDatabase.DatabaseContract.TABLE_NAME, values, selection, selectionArgs);
+            /**
+             * Check if it needs to be inserted in the deleteTable or
+             * notesTable
+             */
+            if (uri.equals(NotesDatabase.DatabaseContract.URI)){
+                updatedRows = writeableDB.update(NotesDatabase.DatabaseContract.TABLE_NAME, values, selection, selectionArgs);
 
             /*
              * Notify registered contentObserver objects about the modifications of the
              * underlying data
              */
-            getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+                getContext().getContentResolver().notifyChange(NotesDatabase.DatabaseContract.URI, null);
+            } else if (uri.equals(NotesDatabase.DeleteNotesContract.URI)){
+                updatedRows = writeableDB.update(NotesDatabase.DeleteNotesContract.TABLE_NAME, values, selection, selectionArgs);
+
+            /*
+             * Notify registered contentObserver objects about the modifications of the
+             * underlying data
+             */
+                getContext().getContentResolver().notifyChange(NotesDatabase.DeleteNotesContract.URI, null);
+            }
         }
         return updatedRows;
     }

@@ -28,16 +28,16 @@
                     android:text = "Login"/>
 
                 <Button
-                    android:id="@+id/notes_list_activity_code_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Code"/>
-
-                <Button
                     android:id="@+id/notes_list_activity_upload_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Save"/>
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/notes_list_activity_logout_btn"
+                    android:text = "Logout"/>
 
             </android.support.v7.widget.Toolbar>
         </android.support.design.widget.AppBarLayout>

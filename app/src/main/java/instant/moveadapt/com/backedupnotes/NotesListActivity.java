@@ -9,8 +9,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,8 +34,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -63,13 +67,17 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import instant.moveadapt.com.backedupnotes.Cloud.BottomSheetCallback;
+import instant.moveadapt.com.backedupnotes.Cloud.CloudCredentialsBottomSheet;
+import instant.moveadapt.com.backedupnotes.Cloud.CloudOptionsBottomSheet;
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
-public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback{
+public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback,
+        BottomSheetCallback{
 
     /*
      * Permission requests code
@@ -88,8 +96,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private Toolbar toolbar;
 
     private Button loginButton;
-    private Button codeButton;
     private Button uploadButton;
+    private Button logoutButton;
 
     /*
      * UI For authentication
@@ -133,19 +141,17 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks onVerificationStateChangedCallbacks;
 
     /*
-     * Verification ID for the phone request returned in onCodeSent
-     */
-    private String verificationID;
-
-    /*
-     * Resend token (don't know what this is used for yet
-     */
-    private PhoneAuthProvider.ForceResendingToken resendToken;
-
-    /*
      * Firebase updatedValue listener
      */
     private ValueEventListener databaseValueListener;
+
+    /*
+     * When user clicks login or register, an alert dialog appears
+     * with the credentials fields for the user to enter email and password
+     * and a button (Login/Register) which calls the onLoginSelected and
+     * onRegisterSelected
+     */
+    private AlertDialog credentialsDialog;
 
     /*
      * Execution comes here when the app is started and the activity created
@@ -167,8 +173,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
         toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
         loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
-        codeButton = (Button) findViewById(R.id.notes_list_activity_code_btn);
         uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
+        logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -192,36 +198,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
-        codeButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(NotesListActivity.this);
-                final EditText codeEditText = new EditText(NotesListActivity.this);
-                builder.setView(codeEditText);
-                builder.setTitle("Enter verification code");
-                builder.setPositiveButton("Verify", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        String code = codeEditText.getText().toString();
-
-                        if (mAuth != null){
-                            PhoneAuthCredential phoneCredential = PhoneAuthProvider.getCredential(verificationID, code);
-                            signIn(phoneCredential);
-                        }
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                });
-                builder.create().show();
-
-            }
-        });
-
         uploadButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -232,41 +208,26 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
-        onVerificationStateChangedCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-            @Override
-            public void onVerificationCompleted(PhoneAuthCredential phoneAuthCredential) {
-                Log.i(TAG, "Verification completed " + phoneAuthCredential.getProvider());
-                signIn(phoneAuthCredential);
-            }
-
-            @Override
-            public void onVerificationFailed(FirebaseException e) {
-                Log.e(TAG, "Verification failed " + e.getMessage());
-            }
-
-            @Override
-            public void onCodeSent(String s, PhoneAuthProvider.ForceResendingToken forceResendingToken) {
-                super.onCodeSent(s, forceResendingToken);
-                Log.d(TAG, "Code sent");
-                verificationID = s;
-                resendToken = forceResendingToken;
-            }
-
-            @Override
-            public void onCodeAutoRetrievalTimeOut(String s) {
-                super.onCodeAutoRetrievalTimeOut(s);
-            }
-        };
-
         loginButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
 
 //                showPhoneNumberDialog();
-                showLoginDialog();
+                CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
+                btmSheet.setBottomSheetCallback(NotesListActivity.this);
+                btmSheet.show();
             }
         });
 
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mAuth != null && mAuth.getCurrentUser() != null){
+                    mAuth.signOut();
+                    Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
 
         notesRecyclerView.setAdapter(notesAdapter);
 
@@ -308,7 +269,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                                     whereClause,
                                     whereArgs);
                             deleteNoteFromCloud(note);
-
                         }
                         actionMode.finish();
                         return true;
@@ -417,7 +377,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                     /*
                      * Show custom text for error
                      */
-                    messageTextView.setText(getResources().getString(R.string.permission_error_text));
+                     messageTextView.setText(getResources().getString(R.string.permission_error_text));
                 } else {
                     /*
                      * Should not get here
@@ -501,35 +461,57 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     public void saveNotesToCloud(DatabaseReference db){
-        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
-                NotesDatabase.DatabaseContract.getTableColumns(),
-                null,
-                null,
-                null);
 
-        if (c != null){
-            do {
-                c.moveToNext();
-                Note currNote = convertToNote(c);
-                String childName = mAuth.getCurrentUser().getUid();
-                DatabaseReference ref = db.child(childName).child(currNote.id.toString());
-                ref.setValue(currNote);
-            }while(!c.isLast());
-            Log.d(TAG, "Uploaded notes");
-        }else{
-            Toast.makeText(getApplicationContext(), "No notes to save ", Toast.LENGTH_LONG).show();
+        if (mAuth != null && mAuth.getCurrentUser() != null) {
+            Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
+                    NotesDatabase.DatabaseContract.getTableColumns(),
+                    null,
+                    null,
+                    null);
+
+            if (c != null) {
+                do {
+
+                    c.moveToNext();
+                    Note currNote = convertToNote(c);
+                    String childName = mAuth.getCurrentUser().getUid();
+                    DatabaseReference ref = db.child(childName).child(currNote.id.toString());
+                    ref.setValue(currNote);
+
+                } while (!c.isLast());
+                Log.d(TAG, "Uploaded notes");
+            } else {
+                Toast.makeText(getApplicationContext(), "No notes to save ", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(getApplicationContext(), "Please login to save notes to cloud", Toast.LENGTH_LONG).show();
         }
     }
 
     public void deleteNoteFromCloud( Note note){
 
-        FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
-        DatabaseReference db = firebaseDb.getReference();
-        db.addValueEventListener(databaseValueListener);
+        if (mAuth != null && mAuth.getCurrentUser() != null) {
+            FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
+            DatabaseReference db = firebaseDb.getReference();
+            db.addValueEventListener(databaseValueListener);
 
-        String childName = mAuth.getCurrentUser().getUid();
-        DatabaseReference userRef = db.child(childName);
-        userRef.child(note.id.toString()).removeValue();
+            String childName = mAuth.getCurrentUser().getUid();
+            DatabaseReference userRef = db.child(childName);
+            userRef.child(note.id.toString()).removeValue();
+        }else{
+            /*
+             * Save the note to be deleted later
+             */
+            storeNoteForLaterDelete(note);
+        }
+    }
+
+    public void storeNoteForLaterDelete(Note note){
+        ContentValues vals = new ContentValues();
+        vals.put(NotesDatabase.DeleteNotesContract._ID, note.id.toString());
+        vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TEXT, note.getText());
+        vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TIMESTAMP, note.getTimestamp());
+        Uri uri = getContentResolver().insert(NotesDatabase.DeleteNotesContract.URI, vals);
     }
 
     private void signIn(PhoneAuthCredential phoneCredential){
@@ -546,187 +528,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         });
     }
 
-    private void showPhoneNumberDialog(){
-        final EditText phoneNumberEditText= new EditText(NotesListActivity.this);
-        AlertDialog.Builder builder = new AlertDialog.Builder(NotesListActivity.this);
-        builder.setTitle("Phone number");
-        builder.setView(phoneNumberEditText);
-        builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                PhoneAuthProvider.getInstance().verifyPhoneNumber(
-                        phoneNumberEditText.getText().toString(),
-                        120,
-                        TimeUnit.SECONDS,
-                        NotesListActivity.this,
-                        onVerificationStateChangedCallbacks);
-            }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        });
-
-        builder.create().show();
-    }
-
-    boolean isLoginVisible = false;
-    boolean isRegisterVisible = false;
-    boolean areButtonsVisible = false;
-    private void showLoginDialog(){
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(NotesListActivity.this);
-        LayoutInflater inflater = getLayoutInflater();
-        View alertDialogView = inflater.inflate(R.layout.authenticate_layout, null, false);
-        Button loginButton = (Button) alertDialogView.findViewById(R.id.authenticate_layout_login);
-        Button registerButton = (Button) alertDialogView.findViewById(R.id.authenticate_layout_create_account);
-        final ViewGroup buttonsLayout = (ViewGroup) alertDialogView.findViewById(R.id.authenticate_layout_buttons_ll);
-        final ViewGroup loginLayout = (ViewGroup) alertDialogView.findViewById(R.id.authenticate_layout_login_ll);
-        final ViewGroup registerLayout = (ViewGroup) alertDialogView.findViewById(R.id.authenticate_layout_register_ll);
-        final EditText emailLoginField = (EditText) alertDialogView.findViewById(R.id.authenticate_layout_login_ll_username);
-        final EditText passwordLoginField = (EditText) alertDialogView.findViewById(R.id.authenticate_layout_login_ll_password);
-        final EditText emailRegisterField = (EditText) alertDialogView.findViewById(R.id.authenticate_layout_register_ll_username);
-        final EditText passwordRegisterField = (EditText) alertDialogView.findViewById(R.id.authenticate_layout_register_ll_password);
-
-        loginButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                loginLayout.setVisibility(View.VISIBLE);
-                buttonsLayout.setVisibility(View.INVISIBLE);
-                registerLayout.setVisibility(View.INVISIBLE);
-                isLoginVisible = true;
-                isRegisterVisible = false;
-                areButtonsVisible = false;
-            }
-        });
-
-        registerButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                registerLayout.setVisibility(View.VISIBLE);
-                buttonsLayout.setVisibility(View.INVISIBLE);
-                loginLayout.setVisibility(View.INVISIBLE);
-                isRegisterVisible = true;
-                isLoginVisible = false;
-                areButtonsVisible = false;
-            }
-        });
-
-        builder.setView(alertDialogView);
-        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                if (isLoginVisible){
-
-                    /*
-                     * Send login
-                     */
-                    String emailString = emailLoginField.getText().toString();
-                    String passwordString = passwordLoginField.getText().toString();
-
-                    mAuth.signInWithEmailAndPassword(emailString, passwordString).addOnCompleteListener(
-                            new OnCompleteListener<AuthResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<AuthResult> task) {
-
-                                /*
-                                 * TODO Show loginSuccessfull
-                                 */
-                                try {
-                                    Log.i(TAG, "Login complete = " + task.getResult().toString());
-                                }catch (Exception e){
-                                    if (e instanceof FirebaseAuthInvalidCredentialsException) {
-                                        Toast.makeText(getApplicationContext(), "Make sure the credentials are written all right", Toast.LENGTH_LONG).show();
-                                    }
-                                }
-
-                                }
-                            }
-                    ).addOnFailureListener(new OnFailureListener() {
-                           @Override
-                           public void onFailure(@NonNull Exception e) {
-                               /*
-                                * TODO Show login failed
-                                */
-                               try {
-                                   Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                               }catch (Exception exception){
-                                   if (exception instanceof FirebaseAuthInvalidCredentialsException) {
-                                       Toast.makeText(getApplicationContext(), "Make sure the credentials are written all right", Toast.LENGTH_LONG).show();
-                                   }
-                               }
-                           }
-                    }
-                    );
-
-                }else if (isRegisterVisible){
-
-                    /**
-                     * Send register request
-                     */
-                    String emailString = emailRegisterField.getText().toString();
-                    String passwordString = passwordRegisterField.getText().toString();
-
-                    mAuth.createUserWithEmailAndPassword(emailString, passwordString).addOnCompleteListener(
-                            new OnCompleteListener<AuthResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<AuthResult> task) {
-
-                                    /*
-                                     * TODO Show loginSuccessfull
-                                     */
-                                    try {
-                                        Log.i(TAG, "Register complete = " + task.getResult().toString());
-                                    }catch (Exception e){
-                                        if (e instanceof FirebaseAuthInvalidCredentialsException) {
-                                            Toast.makeText(getApplicationContext(), "Make sure the credentials are written all right", Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                }
-                            }
-                    ).addOnFailureListener(new OnFailureListener() {
-                       @Override
-                       public void onFailure(@NonNull Exception e) {
-                           /*
-                            * TODO Show login failed
-                            */
-                           try {
-                               Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                           }catch (Exception exception){
-                               if (exception instanceof FirebaseAuthInvalidCredentialsException) {
-                                   Toast.makeText(getApplicationContext(), "Make sure the credentials are written all right", Toast.LENGTH_LONG).show();
-                               }
-                           }
-                       }
-                    }
-                    );
-
-                } else if (areButtonsVisible){
-
-                    /**
-                     * do something
-                     */
-                }
-            }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        });
-
-        builder.create().show();
-
-    }
-
     private Note convertToNote(Cursor c){
         if (c == null){
             return null;
@@ -739,5 +540,103 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         n = new Note(id, text, timestamp);
 
         return n;
+    }
+
+    @Override
+    public void onLoginSelected(String email, String password) {
+        Log.d(TAG, "Login selected");
+
+        if (credentialsDialog != null){
+            credentialsDialog.dismiss();
+        }else{
+            Log.e(TAG, "Alert dialog should be visible");
+        }
+
+        if (mAuth != null){
+            try {
+
+                mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG, "Login failed " + e.getMessage());
+                    }
+                });
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onRegisterSelected(String email, String password) {
+        Log.d(TAG, "Register selected");
+
+        if (credentialsDialog != null){
+            credentialsDialog.dismiss();
+        }else{
+            Log.e(TAG, "Alert dialog should be visible");
+        }
+
+
+        if (mAuth != null){
+            try {
+
+                mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        Log.d(TAG, "Registered in as " + mAuth.getCurrentUser().getEmail());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG, "Register failed " + e.getMessage());
+                    }
+                });
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onOneOfTheOptionsSelected(String optionText) {
+        credentialsDialog = createCredentialsDialog(optionText);
+        credentialsDialog.show();
+    }
+
+    private AlertDialog createCredentialsDialog(final String buttonText){
+
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View rootView = inflater.inflate(R.layout.cloud_credentials_bottom_sheet, null, false);
+        alertBuilder.setView(rootView);
+        final EditText usernameText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_username);
+        final EditText passwordText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
+        Button actionButton = (Button) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_btn);
+
+        actionButton.setText(buttonText);
+        actionButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                if (buttonText.toLowerCase().equals("login")) {
+                    if (((BottomSheetCallback)NotesListActivity.this) != null) {
+                        ((BottomSheetCallback)NotesListActivity.this).onLoginSelected(usernameText.getText().toString(), passwordText.getText().toString());
+                    }
+                } else if (buttonText.toLowerCase().equals("register")){
+                    if (((BottomSheetCallback)NotesListActivity.this) != null) {
+                        ((BottomSheetCallback)NotesListActivity.this).onRegisterSelected(usernameText.getText().toString(), passwordText.getText().toString());
+                    }
+                }
+            }
+        });
+
+        return alertBuilder.create();
     }
 }
