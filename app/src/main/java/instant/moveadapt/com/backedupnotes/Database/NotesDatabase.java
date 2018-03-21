@@ -17,7 +17,7 @@ import android.widget.TabHost;
 public class NotesDatabase extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "notes.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
     private static final String CREATE_STATEMENT = new String("CREATE TABLE "
             + DatabaseContract.TABLE_NAME
             + "("

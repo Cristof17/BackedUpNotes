@@ -38,14 +38,22 @@ public class NotesContentProvider extends ContentProvider {
         SQLiteDatabase readableDB = db.getReadableDatabase();
         Cursor c = null;
 
-        if (readableDB != null){
+        if (uri.equals( NotesDatabase.DatabaseContract.URI)){
             c = readableDB.query(NotesDatabase.DatabaseContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
             /*
              * If a componenet requests for this cursor, the cursor needs to
              * have a listener attached for when the underlying data changes
              */
             c.setNotificationUri(getContext().getContentResolver(), NotesDatabase.DatabaseContract.URI);
+        } else if (uri.equals(NotesDatabase.DeleteNotesContract.URI)){
+            c = readableDB.query(NotesDatabase.DeleteNotesContract.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+            /*
+             * If a componenet requests for this cursor, the cursor needs to
+             * have a listener attached for when the underlying data changes
+             */
+            c.setNotificationUri(getContext().getContentResolver(), NotesDatabase.DeleteNotesContract.URI);
         }
+
         return c;
     }
 

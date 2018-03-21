@@ -50,6 +50,7 @@ import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
@@ -225,6 +226,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 if (mAuth != null && mAuth.getCurrentUser() != null){
                     mAuth.signOut();
                     Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(getApplicationContext(), "Not logged in ", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -333,6 +336,37 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 Log.e(TAG, "Error : " + databaseError.getMessage());
             }
         };
+
+        deleteNotesToBeDeletedFromCloud();
+    }
+
+    private void deleteNotesToBeDeletedFromCloud() {
+
+        if (mAuth.getCurrentUser() != null){
+            Log.d(TAG, "Deleting pending notes from the cloud");
+            Cursor c = getContentResolver().query(NotesDatabase.DeleteNotesContract.URI,
+                    NotesDatabase.DeleteNotesContract.getTableColumns(),
+                    null,
+                    null,
+                    null);
+
+            if (c != null && c.getCount() > 0){
+                do {
+                    c.moveToNext();
+                    Note currNote = convertToNote(c);
+                    deleteNoteFromCloud(currNote);
+
+                    /**
+                     * Delete the note from To be deleted from cloud Table in the db
+                     */
+                    String whereClause = NotesDatabase.DeleteNotesContract._ID + " = ? ";
+                    String selectionArgs[] = {currNote.id.toString()};
+                    getContentResolver().delete(NotesDatabase.DeleteNotesContract.URI,
+                            whereClause,
+                            selectionArgs);
+                }while (!c.isLast());
+            }
+        }
     }
 
     /*
@@ -488,7 +522,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
-    public void deleteNoteFromCloud( Note note){
+    public void deleteNoteFromCloud(Note note){
 
         if (mAuth != null && mAuth.getCurrentUser() != null) {
             FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
@@ -512,20 +546,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TEXT, note.getText());
         vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TIMESTAMP, note.getTimestamp());
         Uri uri = getContentResolver().insert(NotesDatabase.DeleteNotesContract.URI, vals);
-    }
-
-    private void signIn(PhoneAuthCredential phoneCredential){
-        mAuth.signInWithCredential(phoneCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()){
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    Log.d(TAG, "Logged in using " +  user.getPhoneNumber());
-                }else{
-                    Log.e(TAG, "Login using phone number failed");
-                }
-            }
-        });
     }
 
     private Note convertToNote(Cursor c){
@@ -558,7 +578,21 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
+                        try {
+                            if (task.isSuccessful()) {
+                                Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
+                                deleteNotesToBeDeletedFromCloud();
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Cannot login" + task.getException().getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                                Log.d(TAG, task.getException().toString());
+                                Log.d(TAG, task.getResult().toString());
+                            }
+                        }catch (Exception e){
+                            if (e instanceof FirebaseAuthInvalidCredentialsException){
+                                Toast.makeText(getApplicationContext(), "Invalid password", Toast.LENGTH_LONG).show();
+                            }
+                        }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
@@ -589,7 +623,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "Registered in as " + mAuth.getCurrentUser().getEmail());
+                        try {
+                            if (task.isSuccessful()) {
+                                Log.d(TAG, "Registered in as " + mAuth.getCurrentUser().getEmail());
+                            } else {
+                                Log.d(TAG, "Registration failure " + task.getException().toString());
+                                Log.d(TAG, "Registration failure " + task.getResult().toString());
+                            }
+                        }catch (Exception e){
+                            if (e instanceof FirebaseAuthWeakPasswordException){
+                                Toast.makeText(getApplicationContext(), "Password too weak", Toast.LENGTH_LONG).show();
+                            }
+                        }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
