@@ -63,10 +63,24 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import instant.moveadapt.com.backedupnotes.Cloud.BottomSheetCallback;
 import instant.moveadapt.com.backedupnotes.Cloud.CloudCredentialsBottomSheet;
@@ -99,6 +113,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private Button loginButton;
     private Button uploadButton;
     private Button logoutButton;
+    private Button encryptButton;
 
     /*
      * UI For authentication
@@ -176,6 +191,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
         uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
         logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
+        encryptButton = (Button) findViewById(R.id.notes_list_activity_encrypt_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -228,6 +244,50 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                     Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
                 }else{
                     Toast.makeText(getApplicationContext(), "Not logged in ", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+        encryptButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                String password = "pass";
+                PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+                try {
+                    SecretKeyFactory factory = SecretKeyFactory.getInstance("AES");
+                    SecretKey keyTmp = factory.generateSecret(keySpec);
+                    SecretKey secret = new SecretKeySpec(keyTmp.getEncoded(), "AES");
+                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                    cipher.init(Cipher.ENCRYPT_MODE, secret);
+                    String message = "Mesaj";
+                    byte[] encryptedMessageBytes = cipher.doFinal(message.getBytes());
+                    String encryptedMessage = new String(encryptedMessageBytes);
+                    Log.d(TAG, "encrypted message = " + encryptedMessage);
+
+                    cipher.init(Cipher.DECRYPT_MODE, secret);
+                    byte[] decryptedMessageBytes = cipher.doFinal(encryptedMessageBytes);
+                    String decryptedMessage = new String(decryptedMessageBytes);
+                    Log.d(TAG, "decrypted message = " + decryptedMessage);
+
+                }catch (NoSuchAlgorithmException e){
+                    Log.e(TAG, "No such algorithm");
+                } catch (InvalidKeySpecException e) {
+                    Log.e(TAG, "Invalid key spec");
+                    e.printStackTrace();
+                } catch (NoSuchPaddingException e) {
+                    Log.e(TAG, "No such padding");
+                    e.printStackTrace();
+                } catch (InvalidKeyException e) {
+                    Log.e(TAG, "Invalid key ");
+                    e.printStackTrace();
+                } catch (BadPaddingException e) {
+                    Log.e(TAG, "bad padding ");
+                    e.printStackTrace();
+                } catch (IllegalBlockSizeException e) {
+                    Log.e(TAG, "illegal block size" );
+
+                    e.printStackTrace();
                 }
             }
         });
