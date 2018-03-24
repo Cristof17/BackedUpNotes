@@ -10,6 +10,8 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.BottomSheetBehavior;
@@ -63,9 +65,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.security.AlgorithmParameters;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.List;
@@ -76,9 +82,11 @@ import java.util.concurrent.TimeUnit;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -101,6 +109,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
 
     private static final String TAG = "[NOTE_LIST]";
+    private static final String KEY_ALIAS = "cheiecric";
 
     private FloatingActionButton addButton;
     private RecyclerView notesRecyclerView;
@@ -252,29 +261,39 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             @Override
             public void onClick(View v) {
-                String password = "pass";
-                PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+                String passwordString = "pass";
+                byte[] password = passwordString.getBytes();
                 try {
-                    SecretKeyFactory factory = SecretKeyFactory.getInstance("AES");
-                    SecretKey keyTmp = factory.generateSecret(keySpec);
-                    SecretKey secret = new SecretKeySpec(keyTmp.getEncoded(), "AES");
-                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                    cipher.init(Cipher.ENCRYPT_MODE, secret);
+//                    SecretKeyFactory factory = SecretKeyFactory.getInstance("AES");
+//                    SecretKey keyTmp = factory.generateSecret(keySpec);
+                    KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+                    AlgorithmParameterSpec paramsSpec = new KeyGenParameterSpec.Builder(
+                            KEY_ALIAS,
+                            KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
+                            .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                            .setRandomizedEncryptionRequired(false)
+                            .setUserAuthenticationRequired(false)
+                            .build();
+
+                    generator.init(paramsSpec);
+                    SecretKey key = generator.generateKey();
+                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+                    cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec("daa".getBytes()));
                     String message = "Mesaj";
+
                     byte[] encryptedMessageBytes = cipher.doFinal(message.getBytes());
                     String encryptedMessage = new String(encryptedMessageBytes);
                     Log.d(TAG, "encrypted message = " + encryptedMessage);
 
-                    cipher.init(Cipher.DECRYPT_MODE, secret);
+                    IvParameterSpec ivParameterSpec = new IvParameterSpec("daa".getBytes());
+                    cipher.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
                     byte[] decryptedMessageBytes = cipher.doFinal(encryptedMessageBytes);
                     String decryptedMessage = new String(decryptedMessageBytes);
                     Log.d(TAG, "decrypted message = " + decryptedMessage);
 
                 }catch (NoSuchAlgorithmException e){
                     Log.e(TAG, "No such algorithm");
-                } catch (InvalidKeySpecException e) {
-                    Log.e(TAG, "Invalid key spec");
-                    e.printStackTrace();
                 } catch (NoSuchPaddingException e) {
                     Log.e(TAG, "No such padding");
                     e.printStackTrace();
@@ -287,6 +306,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 } catch (IllegalBlockSizeException e) {
                     Log.e(TAG, "illegal block size" );
 
+                    e.printStackTrace();
+                } catch (NoSuchProviderException e) {
+                    e.printStackTrace();
+                } catch (InvalidAlgorithmParameterException e) {
                     e.printStackTrace();
                 }
             }
