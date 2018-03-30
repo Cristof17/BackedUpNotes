@@ -64,6 +64,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -74,6 +80,7 @@ import java.security.NoSuchProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.sql.BatchUpdateException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -261,57 +268,22 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             @Override
             public void onClick(View v) {
-                String passwordString = "pass";
-                byte[] password = passwordString.getBytes();
-                try {
-//                    SecretKeyFactory factory = SecretKeyFactory.getInstance("AES");
-//                    SecretKey keyTmp = factory.generateSecret(keySpec);
-                    KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-                    AlgorithmParameterSpec paramsSpec = new KeyGenParameterSpec.Builder(
-                            KEY_ALIAS,
-                            KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                            .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                            .setRandomizedEncryptionRequired(false)
-                            .setUserAuthenticationRequired(false)
-                            .build();
-
-                    generator.init(paramsSpec);
-                    SecretKey key = generator.generateKey();
-                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-                    cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec("daa".getBytes()));
-                    String message = "Mesaj";
-
-                    byte[] encryptedMessageBytes = cipher.doFinal(message.getBytes());
-                    String encryptedMessage = new String(encryptedMessageBytes);
-                    Log.d(TAG, "encrypted message = " + encryptedMessage);
-
-                    IvParameterSpec ivParameterSpec = new IvParameterSpec("daa".getBytes());
-                    cipher.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
-                    byte[] decryptedMessageBytes = cipher.doFinal(encryptedMessageBytes);
-                    String decryptedMessage = new String(decryptedMessageBytes);
-                    Log.d(TAG, "decrypted message = " + decryptedMessage);
-
-                }catch (NoSuchAlgorithmException e){
-                    Log.e(TAG, "No such algorithm");
-                } catch (NoSuchPaddingException e) {
-                    Log.e(TAG, "No such padding");
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    Log.e(TAG, "Invalid key ");
-                    e.printStackTrace();
-                } catch (BadPaddingException e) {
-                    Log.e(TAG, "bad padding ");
-                    e.printStackTrace();
-                } catch (IllegalBlockSizeException e) {
-                    Log.e(TAG, "illegal block size" );
-
-                    e.printStackTrace();
-                } catch (NoSuchProviderException e) {
-                    e.printStackTrace();
-                } catch (InvalidAlgorithmParameterException e) {
-                    e.printStackTrace();
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < 100000; ++i){
+                    builder.append("a");
                 }
+                byte[] result = encrypt(builder.toString(), "parola");
+                String resultString = new String(result);
+                Log.d(TAG, "Encrypt = " + resultString);
+                Log.d(TAG, "init size = " + builder.toString().getBytes().length +
+                        "INIT STRING SIZE = " + builder.toString().length() +
+                        "last size = " + result.length +
+                        "LAST STINRG SIZE = " + resultString.length());
+
+//                result = decrypt(resultString, "parola");
+//                String decryptString = new String(result);
+//                Log.d(TAG, "Decrypt = " + decryptString);
+
             }
         });
 
@@ -766,5 +738,93 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         });
 
         return alertBuilder.create();
+    }
+
+    private byte[] encrypt(String data, String password){
+
+        byte[] dataBytes = data.getBytes();
+        int resultBuffSize = -1; //the recommended size of the output buffer
+
+        try {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            AlgorithmParameterSpec specs = new KeyGenParameterSpec.Builder(
+                    "key",
+                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    .setRandomizedEncryptionRequired(false)
+                    .build();
+            keyGenerator.init(specs);
+            SecretKey key = keyGenerator.generateKey();
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes()));
+            resultBuffSize = cipher.getOutputSize(dataBytes.length);
+            return cipher.doFinal(dataBytes);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private byte[] decrypt(String data, String password){
+
+        byte[] dataBytes = data.getBytes();
+        ByteArrayInputStream inStream = new ByteArrayInputStream(dataBytes);
+
+        try {
+            KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+
+            AlgorithmParameterSpec spec = new KeyGenParameterSpec.Builder(KEY_ALIAS,
+                KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
+                .setRandomizedEncryptionRequired(false)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .build();
+            generator.init(spec);
+            SecretKey key = generator.generateKey();
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes()));
+
+            int len = -1;
+            int offset = -1;
+
+            byte[] updateData = new byte[1024];
+            while ((len = inStream.read(updateData)) > 0){
+                //call update method
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return  null;
     }
 }
