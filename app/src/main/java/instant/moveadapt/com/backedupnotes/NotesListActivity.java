@@ -771,13 +771,19 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] message1 = new String(
-                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1" +
-                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1").getBytes("UTF-8");
+//            byte[] message1 = new String(
+//                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1" +
+//                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1").getBytes("UTF-8");
 
             byte[] chunk = new String(
                     "Message1Message1Messsage1Message1Message1Message1Messsage1Message1").getBytes("UTF-8");
 
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < 10; ++i){
+                builder.append(new String(chunk));
+            }
+
+            byte[] message1 = builder.toString().getBytes("UTF-8");
             int chunkSize = chunk.length;
             bos.write(message1);
             byte[] result = bos.toByteArray();
@@ -788,14 +794,23 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             int bisAvaialable = bis.available();
             byte[] part = new byte[bisAvaialable];
             byte[] partResult = new byte[bisAvaialable];
-//            while (bisAvaialable > 2 * chunkSize){
-//                bis.read(part, 0, chunkSize);
-//                partResult = cipher.update(part);
-//                bos.write(partResult);
-//                bisAvaialable = bis.available();
-//            }
+            int[] sizes = new int[bisAvaialable];
+            int numblock = 0;
+
+            while (bisAvaialable > 2 * chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
+                sizes[numblock] = partResult.length;
+                numblock++;
+            }
+            part = new byte[bisAvaialable];
             bis.read(part, 0, bisAvaialable);
             partResult = cipher.doFinal(part);
+            sizes[numblock] = partResult.length;
+            numblock++;
             bos.write(partResult);
             result = bos.toByteArray();
 
@@ -810,16 +825,21 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             bisAvaialable = bis.available();
             part = new byte[bisAvaialable];
             partResult = new byte[bisAvaialable];
-//            while (bisAvaialable > 2 * chunkSize){
-//                bis.read(part, 0, chunkSize);
-//                partResult = cipher.update(part);
-//                bos.write(partResult);
-//                bisAvaialable = bis.available();
-//            }
+            int currblock = 0;
+            while (bisAvaialable > sizes[numblock-1]){
+                part = new byte[sizes[currblock]];
+                bis.read(part, 0, sizes[currblock]);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
+                currblock++;
+            }
 
-            bis.read(part, 0, bisAvaialable);
+            part = new byte[sizes[currblock]];
+            bis.read(part, 0,  sizes[currblock]);
             partResult = cipher.doFinal(part);
             bos.write(partResult);
+            currblock++;
 
             String finalResult = new String(partResult);
             Log.d(TAG, "Final result = " + finalResult);
