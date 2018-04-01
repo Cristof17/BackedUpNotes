@@ -3,6 +3,7 @@ package instant.moveadapt.com.backedupnotes;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -114,12 +115,13 @@ import instant.moveadapt.com.backedupnotes.Cloud.CloudCredentialsBottomSheet;
 import instant.moveadapt.com.backedupnotes.Cloud.CloudOptionsBottomSheet;
 import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.Encrypt.EncryptLayoutCallback;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
 public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback,
-        BottomSheetCallback{
+        BottomSheetCallback, EncryptLayoutCallback{
 
     /*
      * Permission requests code
@@ -198,6 +200,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
      */
     private AlertDialog credentialsDialog;
 
+    private AlertDialog encryptionPassDialog;
+
     /*
      * Execution comes here when the app is started and the activity created
      *
@@ -206,9 +210,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate()");
-
-        //TODO
-//        addData();
 
         setContentView(R.layout.activity_notes_list);
 
@@ -283,21 +284,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onClick(View v) {
 
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < 10000; ++i) {
-                    builder.append("a");
-                }
-
-                try {
-
-                    SecretKey key = getKey();
-                    byte[] encryptedText = encrypt(builder.toString().getBytes("UTF-8"), "parola", key);
-                    byte[] decryptedText = decrypt(encryptedText, "parola", key);
-
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }catch (Exception e){
-                    e.printStackTrace();
+                boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.areEncrypted(getApplicationContext());
+                if (areEncrypted){
+                    (encryptionPassDialog = createEncryptPassDialog("Decrypt")).show();
+                } else {
+                    (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
                 }
             }
         });
@@ -310,7 +301,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
              */
             @Override
             public void onClick(View v) {
-                String key = generateKey();
+                String key = generateKey(getApplicationContext());
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 Log.d(TAG, "Key = " + key);
                 prefs.edit().putString("Key", key).commit();
@@ -424,13 +415,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         };
 
         deleteNotesToBeDeletedFromCloud();
-    }
-
-    private SecretKey getKey(){
-        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("Key", generateKey());
-        String keyJSON = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("Key", null);
-        SecretKey key = convertToKey(keyJSON);
-        return key;
     }
 
     private void deleteNotesToBeDeletedFromCloud() {
@@ -585,6 +569,82 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         String notesToDeleteJson = gson.toJson(notesToDelete);
         outState.putString("notesToDelete", notesToDeleteJson);
         outState.putBoolean("actionMode", actionMode != null);
+    }
+
+    public static SecretKey getKey(Context context){
+        android.preference.PreferenceManager.getDefaultSharedPreferences(context).edit().putString("Key", generateKey(context));
+        String keyJSON = android.preference.PreferenceManager.getDefaultSharedPreferences(context).getString("Key", null);
+        SecretKey key = convertToKey(keyJSON);
+        return key;
+    }
+
+    private static String generateKey(Context context) {
+
+        KeyGenerator keyGenerator = null;
+        AlgorithmParameterSpec specs;
+        SecretKey key;
+        Cipher cipher;
+        ByteArrayOutputStream bos;
+        ByteArrayInputStream bis;
+        ;
+        int chunkSize = 1024;
+        int bisAvaialable;
+        byte[] result;
+        byte[] part;
+        byte[] partialSolution;
+        byte[] partResult;
+
+        try {
+            keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            specs = new KeyGenParameterSpec.Builder(
+                    "key",
+                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    .setRandomizedEncryptionRequired(false)
+                    .build();
+            keyGenerator.init(specs);
+            key = keyGenerator.generateKey();
+
+            bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(key);
+            oos.close();
+            String keyString = Base64.encodeToString(bos.toByteArray(), 0);
+
+            android.preference.PreferenceManager.getDefaultSharedPreferences(context).edit()
+                    .putString("Key", keyString).commit();
+            return keyString;
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private static SecretKey convertToKey(String keyString){
+        if (keyString == null)
+            return null;
+        final byte[] keyBytes = Base64.decode(keyString, 0);
+        ByteArrayInputStream bis = new ByteArrayInputStream(keyBytes);
+        SecretKey key = null;
+        try {
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            key = (SecretKey) ois.readObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return key;
+
     }
 
     public void saveNotesToCloud(DatabaseReference db){
@@ -891,18 +951,79 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-    private String generateKey() {
+    private AlertDialog createEncryptPassDialog(final String buttonText){
 
-        KeyGenerator keyGenerator = null;
-        AlgorithmParameterSpec specs;
-        SecretKey key;
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View rootView = inflater.inflate(R.layout.encrypt_passord_layout, null, false);
+        alertBuilder.setView(rootView);
+        final EditText passwordText = (EditText) rootView.findViewById(R.id.encrypt_layout_password);
+        Button actionButton = (Button) rootView.findViewById(R.id.encrypt_layout_btn);
+
+        actionButton.setText(buttonText);
+        actionButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                if (buttonText.toLowerCase().equals("encrypt")) {
+                    if (((EncryptLayoutCallback)NotesListActivity.this) != null) {
+                        ((EncryptLayoutCallback)NotesListActivity.this).onEncryptSelected(passwordText.getText().toString());
+                    }
+                } else if (buttonText.toLowerCase().equals("decrypt")){
+                    if (((EncryptLayoutCallback)NotesListActivity.this) != null) {
+                        ((EncryptLayoutCallback)NotesListActivity.this).onDecryptSelected(passwordText.getText().toString());
+                    }
+                }
+            }
+        });
+
+        return alertBuilder.create();
+    }
+
+    @Override
+    public void onEncryptSelected(String password) {
+
+        try {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < 10000; ++i) {
+                builder.append("a");
+            }
+
+            generateKey(getApplicationContext());
+            SecretKey key = getKey(getApplicationContext());
+            if (key != null) {
+                byte[] encryptedText = encrypt(builder.toString().getBytes("UTF-8"), password, key);
+                byte[] decryptedText = decrypt(encryptedText, password, key);
+                instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                        getApplicationContext(),
+                        true);
+            }
+
+            if (encryptionPassDialog != null){
+                encryptionPassDialog.dismiss();
+            }
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDecryptSelected(String password) {
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                getApplicationContext(),
+                false);
+        if (encryptionPassDialog != null){
+            encryptionPassDialog.dismiss();
+        }
+    }
+
+    private byte[] encrypt(byte[] data, String password, SecretKey key) throws UnsupportedEncodingException {
+
         Cipher cipher;
         ByteArrayOutputStream bos;
-        ByteArrayInputStream bis;
-        ;
+        ByteArrayInputStream bis;;
         int chunkSize = 1024;
         int bisAvaialable;
         byte[] result;
@@ -911,116 +1032,59 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         byte[] partResult;
 
         try {
-            keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-            specs = new KeyGenParameterSpec.Builder(
-                    "key",
-                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                    .setRandomizedEncryptionRequired(false)
-                    .build();
-            keyGenerator.init(specs);
-            key = keyGenerator.generateKey();
 
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
+
+            //encrypt
+            bis = new ByteArrayInputStream(data);
             bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(key);
-            oos.close();
-            return Base64.encodeToString(bos.toByteArray(), 0);
+            bisAvaialable = bis.available();
+            part = new byte[bisAvaialable];
+            partResult = new byte[bisAvaialable];
+
+            while (bisAvaialable > 2 * chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
+            }
+            part = new byte[bisAvaialable];
+            bis.read(part, 0, bisAvaialable);
+            partResult = cipher.doFinal(part);
+            bos.write(partResult);
+            result = bos.toByteArray();
+            Log.d(TAG, "Encrypted text = " + new String(result));
+            return result;
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return null;
+    return null;
     }
 
-    private SecretKey convertToKey(String keyString){
-        final byte[] keyBytes = Base64.decode(keyString, 0);
-        ByteArrayInputStream bis = new ByteArrayInputStream(keyBytes);
-        SecretKey key = null;
-        try {
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            key = (SecretKey) ois.readObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return key;
-
-    }
-
-        private byte[] encrypt(byte[] data, String password, SecretKey key) throws UnsupportedEncodingException {
-
-            Cipher cipher;
-            ByteArrayOutputStream bos;
-            ByteArrayInputStream bis;;
-            int chunkSize = 1024;
-            int bisAvaialable;
-            byte[] result;
-            byte[] part;
-            byte[] partialSolution;
-            byte[] partResult;
-
-            try {
-
-                cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-                cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
-
-                //encrypt
-                bis = new ByteArrayInputStream(data);
-                bos = new ByteArrayOutputStream();
-                bisAvaialable = bis.available();
-                part = new byte[bisAvaialable];
-                partResult = new byte[bisAvaialable];
-
-                while (bisAvaialable > 2 * chunkSize){
-                    part = new byte[chunkSize];
-                    bis.read(part, 0, chunkSize);
-                    partResult = cipher.update(part);
-                    bos.write(partResult);
-                    bisAvaialable = bis.available();
-                }
-                part = new byte[bisAvaialable];
-                bis.read(part, 0, bisAvaialable);
-                partResult = cipher.doFinal(part);
-                bos.write(partResult);
-                result = bos.toByteArray();
-                Log.d(TAG, "Encrypted text = " + new String(result));
-                return result;
-
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (InvalidAlgorithmParameterException e) {
-                e.printStackTrace();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (NoSuchPaddingException e) {
-                e.printStackTrace();
-            } catch (InvalidKeyException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        return null;
-    }
 
     private byte[] decrypt(byte[] dataBytes, String password, SecretKey key) throws UnsupportedEncodingException {
 
         Cipher cipher;
         ByteArrayOutputStream bos;
-        ByteArrayInputStream bis;;
+        ByteArrayInputStream bis;
+        ;
         int chunkSize;
         int bisAvaialable;
         byte[] result;
@@ -1039,7 +1103,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             part = new byte[bisAvaialable];
             partResult = new byte[bisAvaialable];
             chunkSize = 1024;
-            while (bisAvaialable > chunkSize){
+            while (bisAvaialable > chunkSize) {
                 part = new byte[chunkSize];
                 bis.read(part, 0, chunkSize);
                 partResult = cipher.update(part);
@@ -1047,7 +1111,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 bisAvaialable = bis.available();
             }
             part = new byte[bisAvaialable];
-            bis.read(part, 0,  bisAvaialable);
+            bis.read(part, 0, bisAvaialable);
             partResult = cipher.doFinal(part);
             bos.write(partResult);
             Log.d(TAG, "Decrypted = " + new String(bos.toByteArray()));
