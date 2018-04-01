@@ -24,6 +24,18 @@
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:id="@+id/gen_key_button"
+                    android:text="Key"/>
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/notes_list_activity_encrypt_btn"
+                    android:text = "Encrypt"/>
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/notes_list_activity_login_btn"
                     android:text = "Login"/>
 
@@ -40,12 +52,6 @@
                     android:id="@+id/notes_list_activity_logout_btn"
                     android:text = "Logout"/>
 
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/notes_list_activity_encrypt_btn"
-                    android:text = "Encrypt"/>
 
             </android.support.v7.widget.Toolbar>
         </android.support.design.widget.AppBarLayout>
