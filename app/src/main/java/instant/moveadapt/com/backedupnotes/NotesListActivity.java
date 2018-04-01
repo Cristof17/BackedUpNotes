@@ -280,7 +280,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
                 try {
                     byte[] encryptedText = encrypt(builder.toString().getBytes("UTF-8"), "parola");
-                    byte[] decryptedText = decrypt(encryptedText, "parola");
+//                    byte[] decryptedText = decrypt(encryptedText, "parola");
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -810,28 +810,29 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 //            byte[] crypt2 = cipher.update(message2.getBytes("UTF-8"));
 //            byte[] crypt3 = cipher.doFinal(message3.getBytes("UTF-8"));
 
-            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
+//            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
+//
+//            //decrypt
+//            bis = new ByteArrayInputStream(result);
+//            bos = new ByteArrayOutputStream();
+//            bisAvaialable = bis.available();
+//            part = new byte[bisAvaialable];
+//            partResult = new byte[bisAvaialable];
+//            chunkSize = 1024;
+//            while (bisAvaialable > chunkSize){
+//                part = new byte[chunkSize];
+//                bis.read(part, 0, chunkSize);
+//                partResult = cipher.update(part);
+//                bos.write(partResult);
+//                bisAvaialable = bis.available();
+//            }
+//            part = new byte[bisAvaialable];
+//            bis.read(part, 0,  bisAvaialable);
+//            partResult = cipher.doFinal(part);
+//            bos.write(partResult);
 
-            //decrypt
-            bis = new ByteArrayInputStream(result);
-            bos = new ByteArrayOutputStream();
-            bisAvaialable = bis.available();
-            part = new byte[bisAvaialable];
-            partResult = new byte[bisAvaialable];
-            chunkSize = 1024;
-            while (bisAvaialable > chunkSize){
-                part = new byte[chunkSize];
-                bis.read(part, 0, chunkSize);
-                partResult = cipher.update(part);
-                bos.write(partResult);
-                bisAvaialable = bis.available();
-            }
-            part = new byte[bisAvaialable];
-            bis.read(part, 0,  bisAvaialable);
-            partResult = cipher.doFinal(part);
-            bos.write(partResult);
-
-            String finalResult = new String(bos.toByteArray());
+            result = decrypt(result, password, key);
+            String finalResult = new String(result);
             Log.d(TAG, "Final result = " + finalResult);
 
         } catch (NoSuchAlgorithmException e) {
@@ -929,11 +930,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         return null;
     }
 
-    private byte[] decrypt(byte[] dataBytes, String password) throws UnsupportedEncodingException {
+    private byte[] decrypt(byte[] dataBytes, String password, SecretKey key) throws UnsupportedEncodingException {
 
         KeyGenerator keyGenerator = null;
         AlgorithmParameterSpec specs;
-        SecretKey key;
+//        SecretKey key;
         Cipher cipher;
         ByteArrayOutputStream bos;
         ByteArrayInputStream bis;;
@@ -953,7 +954,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                     .setRandomizedEncryptionRequired(false)
                     .build();
             keyGenerator.init(specs);
-            key = keyGenerator.generateKey();
+//            key = keyGenerator.generateKey();
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
@@ -975,8 +976,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             bis.read(part, 0,  bisAvaialable);
             partResult = cipher.doFinal(part);
             bos.write(partResult);
-            result = bos.toByteArray();
-            return result;
+            return bos.toByteArray();
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
