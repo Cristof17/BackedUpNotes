@@ -272,28 +272,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             @Override
             public void onClick(View v) {
-//                try {
-                    StringBuilder builder = new StringBuilder();
-                    for (int i = 0; i < 10000; ++i) {
-                        builder.append("a");
-                    }
-//                    int[] sizeBytes = new int[builder.toString().getBytes("UTF-8").length];
-//                    byte[] result = encrypt(builder.toString().getBytes("UTF-8"), sizeBytes, "parola");
-//                    String resultString = new String(result);
-//                    Log.d(TAG, "Encrypt = " + resultString);
-//                    Log.d(TAG, "init size = " + builder.toString().getBytes().length +
-//                            "INIT STRING SIZE = " + builder.toString().length() +
-//                            "last size = " + result.length +
-//                            "LAST STINRG SIZE = " + resultString.length());
-//
-//                    result = decrypt(result, sizeBytes, "parola");
-//                    String decryptString = new String(result);
-//                    Log.d(TAG, "Decrypt = " + decryptString);
-//
-//                }catch (UnsupportedEncodingException e){
-//                    e.printStackTrace();
-//                }
 
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < 10000; ++i) {
+                    builder.append("a");
+                }
+
+                try {
+                    byte[] encryptedText = encrypt(builder.toString().getBytes("UTF-8"), "parola");
+                    byte[] decryptedText = decrypt(encryptedText, "parola");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
                 testEncDec(builder.toString(), "parola");
             }
         });
@@ -754,65 +744,67 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public void testEncDec(String data, String password){
 
         KeyGenerator keyGenerator = null;
+        AlgorithmParameterSpec specs;
+        SecretKey key;
+        Cipher cipher;
+        ByteArrayOutputStream bos;
+        ByteArrayInputStream bis;;
+        int chunkSize;
+        int bisAvaialable;
+        byte[] result;
+        byte[] part;
+        byte[] partialSolution;
+        byte[] partResult;
         try {
             keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-
-            AlgorithmParameterSpec specs = new KeyGenParameterSpec.Builder(
+            specs = new KeyGenParameterSpec.Builder(
                     "key",
                     KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .setRandomizedEncryptionRequired(false)
                     .build();
-
             keyGenerator.init(specs);
-            SecretKey key = keyGenerator.generateKey();
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            key = keyGenerator.generateKey();
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
 //            byte[] message1 = new String(
 //                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1" +
 //                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1").getBytes("UTF-8");
 
-            byte[] chunk = new String(
-                    "Message1Message1Messsage1Message1Message1Message1Messsage1Message1").getBytes("UTF-8");
+//            byte[] chunk = new String(
+//                    "Message1Message1Messsage1Message1Message1Message1Messsage1Message1").getBytes("UTF-8");
 
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < 10; ++i){
-                builder.append(new String(chunk));
-            }
+//            StringBuilder builder = new StringBuilder();
+//            for (int i = 0; i < 10; ++i){
+//                builder.append(new String(chunk));
+//            }
 
-            byte[] message1 = builder.toString().getBytes("UTF-8");
-            int chunkSize = chunk.length;
-            bos.write(message1);
-            byte[] result = bos.toByteArray();
+//            byte[] message1 = builder.toString().getBytes("UTF-8");
+            chunkSize = 1024;
+//            bos.write(message1);
+//            result = bos.toByteArray();
 
             //encrypt
-            ByteArrayInputStream bis = new ByteArrayInputStream(result);
+            bis = new ByteArrayInputStream(data.getBytes("UTF-8"));
             bos = new ByteArrayOutputStream();
-            int bisAvaialable = bis.available();
-            byte[] part = new byte[bisAvaialable];
-            byte[] partResult = new byte[bisAvaialable];
-            int[] sizes = new int[bisAvaialable];
-            int numblock = 0;
-
+            bisAvaialable = bis.available();
+            part = new byte[bisAvaialable];
+            partResult = new byte[bisAvaialable];
             while (bisAvaialable > 2 * chunkSize){
                 part = new byte[chunkSize];
                 bis.read(part, 0, chunkSize);
                 partResult = cipher.update(part);
                 bos.write(partResult);
                 bisAvaialable = bis.available();
-                sizes[numblock] = partResult.length;
-                numblock++;
             }
             part = new byte[bisAvaialable];
             bis.read(part, 0, bisAvaialable);
             partResult = cipher.doFinal(part);
-            sizes[numblock] = partResult.length;
-            numblock++;
             bos.write(partResult);
             result = bos.toByteArray();
+            Log.d(TAG, "Encrypted text = " + new String(result));
 
 //            byte[] crypt1 = cipher.update(message1);
 //            byte[] crypt2 = cipher.update(message2.getBytes("UTF-8"));
@@ -820,38 +812,27 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
+            //decrypt
             bis = new ByteArrayInputStream(result);
             bos = new ByteArrayOutputStream();
             bisAvaialable = bis.available();
             part = new byte[bisAvaialable];
             partResult = new byte[bisAvaialable];
-            int currblock = 0;
-            while (bisAvaialable > sizes[numblock-1]){
-                part = new byte[sizes[currblock]];
-                bis.read(part, 0, sizes[currblock]);
+            chunkSize = 1024;
+            while (bisAvaialable > chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
                 partResult = cipher.update(part);
                 bos.write(partResult);
                 bisAvaialable = bis.available();
-                currblock++;
             }
-
-            part = new byte[sizes[currblock]];
-            bis.read(part, 0,  sizes[currblock]);
+            part = new byte[bisAvaialable];
+            bis.read(part, 0,  bisAvaialable);
             partResult = cipher.doFinal(part);
             bos.write(partResult);
-            currblock++;
 
-            String finalResult = new String(partResult);
+            String finalResult = new String(bos.toByteArray());
             Log.d(TAG, "Final result = " + finalResult);
-
-//            byte[] decrypt1 = cipher.update(crypt1);
-//            byte[] decrypt2 = cipher.update(crypt2);
-//            byte[] decrypt3 = cipher.doFinal(crypt3);
-
-//            Log.d(TAG, "decrypt1 = " + new String(decrypt1));
-//            Log.d(TAG, "decrypt2 = " + new String(decrypt2));
-//            Log.d(TAG, "decrypt3 = " + new String(decrypt3));
-
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -875,57 +856,55 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     }
 
-    private byte[] encrypt(byte[] dataBytes, int[] sizeBytes, String password) throws UnsupportedEncodingException {
+    private byte[] encrypt(byte[] data, String password) throws UnsupportedEncodingException {
 
-        int resultBuffSize = 0; //the recommended size of the output buffer
-        byte[] result = new byte[100 * dataBytes.length];
-        Log.d(TAG, "Input size = " + dataBytes.length);
+        KeyGenerator keyGenerator = null;
+        AlgorithmParameterSpec specs;
+        SecretKey key;
+        Cipher cipher;
+        ByteArrayOutputStream bos;
+        ByteArrayInputStream bis;;
+        int chunkSize = 1024;
+        int bisAvaialable;
+        byte[] result;
+        byte[] part;
+        byte[] partialSolution;
+        byte[] partResult;
 
         try {
-
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-            AlgorithmParameterSpec specs = new KeyGenParameterSpec.Builder(
+            keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            specs = new KeyGenParameterSpec.Builder(
                     "key",
                     KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .setRandomizedEncryptionRequired(false)
                     .build();
-
             keyGenerator.init(specs);
-            SecretKey key = keyGenerator.generateKey();
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            key = keyGenerator.generateKey();
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
-            int chunkSize = 100 * cipher.getBlockSize();
-            byte[] partialSolution = new byte[chunkSize];
-            byte[] chunk;
-            int bytesRead = 0;
-            int numchunks = 0;
-            int encryptionBlocks = 0;
+            //encrypt
+            bis = new ByteArrayInputStream(data);
+            bos = new ByteArrayOutputStream();
+            bisAvaialable = bis.available();
+            part = new byte[bisAvaialable];
+            partResult = new byte[bisAvaialable];
 
-            while (bytesRead < dataBytes.length){
-
-                if (bytesRead + chunkSize < dataBytes.length){
-                    chunk = Arrays.copyOfRange(dataBytes, bytesRead, bytesRead + chunkSize);
-                    partialSolution = cipher.update(chunk);
-                    System.arraycopy(partialSolution, 0, result, bytesRead, partialSolution.length);
-                    resultBuffSize += partialSolution.length;
-                    sizeBytes[encryptionBlocks] = partialSolution.length;
-                    bytesRead += chunkSize;
-                } else{
-                    chunk = Arrays.copyOfRange(dataBytes, bytesRead, dataBytes.length);
-                    partialSolution = cipher.doFinal(chunk);
-                    System.arraycopy(partialSolution, 0, result, bytesRead, partialSolution.length);
-                    resultBuffSize += partialSolution.length;
-                    sizeBytes[encryptionBlocks] = partialSolution.length;
-                    bytesRead = dataBytes.length;
-                }
-                encryptionBlocks ++;
+            while (bisAvaialable > 2 * chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
             }
-
-            result = Arrays.copyOfRange(result, 0, resultBuffSize);
-
+            part = new byte[bisAvaialable];
+            bis.read(part, 0, bisAvaialable);
+            partResult = cipher.doFinal(part);
+            bos.write(partResult);
+            result = bos.toByteArray();
+            Log.d(TAG, "Encrypted text = " + new String(result));
             return result;
 
         } catch (NoSuchAlgorithmException e) {
@@ -933,6 +912,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         } catch (NoSuchProviderException e) {
             e.printStackTrace();
         } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } catch (NoSuchPaddingException e) {
             e.printStackTrace();
@@ -942,68 +923,59 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
         return null;
     }
 
-    private byte[] decrypt(byte[] dataBytes, int[] encryptionSize, String password) throws UnsupportedEncodingException {
+    private byte[] decrypt(byte[] dataBytes, String password) throws UnsupportedEncodingException {
 
-        int resultBuffSize = 0; //the recommended size of the output buffer
-        byte[] result = new byte[100 * dataBytes.length];
-        Log.d(TAG, "Input size = " + dataBytes.length);
-
+        KeyGenerator keyGenerator = null;
+        AlgorithmParameterSpec specs;
+        SecretKey key;
+        Cipher cipher;
+        ByteArrayOutputStream bos;
+        ByteArrayInputStream bis;;
+        int chunkSize;
+        int bisAvaialable;
+        byte[] result;
+        byte[] part;
+        byte[] partialSolution;
+        byte[] partResult;
         try {
-
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-            AlgorithmParameterSpec specs = new KeyGenParameterSpec.Builder(
+            keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+            specs = new KeyGenParameterSpec.Builder(
                     "key",
                     KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .setRandomizedEncryptionRequired(false)
                     .build();
-
             keyGenerator.init(specs);
-            SecretKey key = keyGenerator.generateKey();
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            key = keyGenerator.generateKey();
+            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
-            int chunkSize = 100;
-            byte[] partialSolution = new byte[chunkSize];
-            byte[] chunk;
-            int bytesRead = 0;
-            int numchunks = 0;
-            int numChunks = 0;
-
-            int numShouldChunks = 0;
-            for (int i =0 ;i < encryptionSize.length; ++i){
-                if (encryptionSize[i] != 0){
-                    numShouldChunks++;
-                }
+            //decrypt
+            bis = new ByteArrayInputStream(dataBytes);
+            bos = new ByteArrayOutputStream();
+            bisAvaialable = bis.available();
+            part = new byte[bisAvaialable];
+            partResult = new byte[bisAvaialable];
+            chunkSize = 1024;
+            while (bisAvaialable > chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
             }
-
-            while (true){
-
-                if (numChunks < (numShouldChunks-1)){
-                    chunk = Arrays.copyOfRange(dataBytes, bytesRead, bytesRead + encryptionSize[numChunks]);
-                    partialSolution = cipher.update(chunk);
-                    System.arraycopy(partialSolution, 0, result, bytesRead, partialSolution.length);
-                    resultBuffSize += partialSolution.length;
-                    bytesRead += encryptionSize[numChunks];
-                } else{
-                    chunk = Arrays.copyOfRange(dataBytes, bytesRead, bytesRead + encryptionSize[numChunks]);
-                    partialSolution = cipher.doFinal(chunk);
-                    System.arraycopy(partialSolution, 0, result, bytesRead, partialSolution.length);
-                    resultBuffSize += partialSolution.length;
-                    bytesRead += encryptionSize[numChunks];
-                    break;
-                }
-                numChunks++;
-            }
-
-            result = Arrays.copyOfRange(result, 0, resultBuffSize);
-
+            part = new byte[bisAvaialable];
+            bis.read(part, 0,  bisAvaialable);
+            partResult = cipher.doFinal(part);
+            bos.write(partResult);
+            result = bos.toByteArray();
             return result;
 
         } catch (NoSuchAlgorithmException e) {
@@ -1012,6 +984,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             e.printStackTrace();
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         } catch (NoSuchPaddingException e) {
             e.printStackTrace();
         } catch (InvalidKeyException e) {
@@ -1019,6 +993,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         } catch (BadPaddingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
