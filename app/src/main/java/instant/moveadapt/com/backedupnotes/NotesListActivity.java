@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -907,28 +908,29 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 //            byte[] crypt2 = cipher.update(message2.getBytes("UTF-8"));
 //            byte[] crypt3 = cipher.doFinal(message3.getBytes("UTF-8"));
 
-//            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
-//
-//            //decrypt
-//            bis = new ByteArrayInputStream(result);
-//            bos = new ByteArrayOutputStream();
-//            bisAvaialable = bis.available();
-//            part = new byte[bisAvaialable];
-//            partResult = new byte[bisAvaialable];
-//            chunkSize = 1024;
-//            while (bisAvaialable > chunkSize){
-//                part = new byte[chunkSize];
-//                bis.read(part, 0, chunkSize);
-//                partResult = cipher.update(part);
-//                bos.write(partResult);
-//                bisAvaialable = bis.available();
-//            }
-//            part = new byte[bisAvaialable];
-//            bis.read(part, 0,  bisAvaialable);
-//            partResult = cipher.doFinal(part);
-//            bos.write(partResult);
+            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
-            result = decrypt(result, password, key);
+            //decrypt
+            bis = new ByteArrayInputStream(result);
+            bos = new ByteArrayOutputStream();
+            bisAvaialable = bis.available();
+            part = new byte[bisAvaialable];
+            partResult = new byte[bisAvaialable];
+            chunkSize = 1024;
+            while (bisAvaialable > chunkSize){
+                part = new byte[chunkSize];
+                bis.read(part, 0, chunkSize);
+                partResult = cipher.update(part);
+                bos.write(partResult);
+                bisAvaialable = bis.available();
+            }
+            part = new byte[bisAvaialable];
+            bis.read(part, 0,  bisAvaialable);
+            partResult = cipher.doFinal(part);
+            bos.write(partResult);
+            result = bos.toByteArray();
+
+//            result = decrypt(result, password, key);
             String finalResult = new String(result);
             Log.d(TAG, "Final result = " + finalResult);
 
@@ -994,7 +996,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             generateKey(getApplicationContext());
             SecretKey key = getKey(getApplicationContext());
             if (key != null) {
-                byte[] encryptedText = encrypt(builder.toString().getBytes("UTF-8"), password, key);
+                String encryptedText = encrypt(builder.toString().getBytes("UTF-8"), password, key);
                 byte[] decryptedText = decrypt(encryptedText, password, key);
                 instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
                         getApplicationContext(),
@@ -1019,7 +1021,30 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
-    private byte[] encrypt(byte[] data, String password, SecretKey key) throws UnsupportedEncodingException {
+    //TODO
+    public void encryptAllNotes(Context context, String password){
+
+        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
+                NotesDatabase.DatabaseContract.getTableColumns(),
+                null,
+                null,
+                null);
+
+        if (c != null) {
+            do {
+                Note note = convertToNote(c);
+
+            } while (c.moveToNext());
+        }
+    }
+
+    //TODO
+    private void encryptSingleNote(Context context, Note note, String password){
+        ContentValues vals = new ContentValues();
+        ContentResolver resolver = context.getContentResolver();
+    }
+
+    private String encrypt(byte[] data, String password, SecretKey key) throws UnsupportedEncodingException {
 
         Cipher cipher;
         ByteArrayOutputStream bos;
@@ -1056,7 +1081,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             bos.write(partResult);
             result = bos.toByteArray();
             Log.d(TAG, "Encrypted text = " + new String(result));
-            return result;
+            String keyString = Base64.encodeToString(bos.toByteArray(), 0);
+            return keyString;
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -1079,7 +1105,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
 
-    private byte[] decrypt(byte[] dataBytes, String password, SecretKey key) throws UnsupportedEncodingException {
+    private byte[] decrypt(String base64Data, String password, SecretKey key) throws UnsupportedEncodingException {
 
         Cipher cipher;
         ByteArrayOutputStream bos;
@@ -1091,6 +1117,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         byte[] part;
         byte[] partialSolution;
         byte[] partResult;
+        byte[] dataBytes = Base64.decode(base64Data.getBytes("UTF-8"), 0);
         try {
 
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
