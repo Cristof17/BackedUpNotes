@@ -372,10 +372,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         mAuth = FirebaseAuth.getInstance();
 
-        //TODO Remove later
-//        loginButton.setVisibility(View.INVISIBLE);
-//        codeButton.setVisibility(View.INVISIBLE);
-
         /*
          * Restore the state
          */
@@ -573,7 +569,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     public static SecretKey getKey(Context context){
-        android.preference.PreferenceManager.getDefaultSharedPreferences(context).edit().putString("Key", generateKey(context));
         String keyJSON = android.preference.PreferenceManager.getDefaultSharedPreferences(context).getString("Key", null);
         SecretKey key = convertToKey(keyJSON);
         return key;
@@ -910,8 +905,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
 
+            String base64Data = Base64.encodeToString(bos.toByteArray(), 0);
             //decrypt
-            bis = new ByteArrayInputStream(result);
+            bis = new ByteArrayInputStream(Base64.decode(base64Data.getBytes(), 0));
             bos = new ByteArrayOutputStream();
             bisAvaialable = bis.available();
             part = new byte[bisAvaialable];
@@ -987,42 +983,46 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void onEncryptSelected(String password) {
 
-        try {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < 10000; ++i) {
-                builder.append("a");
-            }
-
-            generateKey(getApplicationContext());
-            SecretKey key = getKey(getApplicationContext());
-            if (key != null) {
-                String encryptedText = encrypt(builder.toString().getBytes("UTF-8"), password, key);
-                byte[] decryptedText = decrypt(encryptedText, password, key);
-                instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
-                        getApplicationContext(),
-                        true);
-            }
-
-            if (encryptionPassDialog != null){
-                encryptionPassDialog.dismiss();
-            }
-        }catch (UnsupportedEncodingException e){
-            e.printStackTrace();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < 10000; ++i) {
+            builder.append("a");
         }
+
+        generateKey(getApplicationContext());
+        SecretKey key = getKey(getApplicationContext());
+        if (key != null) {
+            encryptAllNotes(getApplicationContext(), password, key);
+            instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                    getApplicationContext(),
+                    true);
+        }
+
+        if (encryptionPassDialog != null){
+            encryptionPassDialog.dismiss();
+        }
+
+        notesAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onDecryptSelected(String password) {
-        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
-                getApplicationContext(),
-                false);
+
+        SecretKey key = getKey(getApplicationContext());
+        if (key != null) {
+            decryptAllNotes(getApplicationContext(), password, key);
+            instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                    getApplicationContext(),
+                    false);
+        }
+
         if (encryptionPassDialog != null){
             encryptionPassDialog.dismiss();
         }
+
+        notesAdapter.notifyDataSetChanged();
     }
 
-    //TODO
-    public void encryptAllNotes(Context context, String password){
+    public void encryptAllNotes(Context context, String password, SecretKey key){
 
         Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
@@ -1032,16 +1032,78 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         if (c != null) {
             do {
+                c.moveToNext();
                 Note note = convertToNote(c);
-
-            } while (c.moveToNext());
+                encryptSingleNote(context, note, password, key);
+            } while (! c.isLast());
         }
     }
 
-    //TODO
-    private void encryptSingleNote(Context context, Note note, String password){
-        ContentValues vals = new ContentValues();
-        ContentResolver resolver = context.getContentResolver();
+    private void encryptSingleNote(Context context, Note note, String password, SecretKey key){
+        try {
+            ContentValues vals = new ContentValues();
+            String encryptedText = encrypt(note.text.getBytes("UTF-8"), password, key);
+            if (encryptedText == null) {
+                Toast.makeText(getApplicationContext(), "Error when encrypting " +
+                note.text, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
+                    encryptedText);
+            ContentResolver resolver = context.getContentResolver();
+            String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+            String[] whereArgs = new String[] {note.id.toString()};
+
+            resolver.update(NotesDatabase.DatabaseContract.URI,
+                    vals,
+                    whereClause,
+                    whereArgs
+                    );
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void decryptAllNotes(Context context, String password, SecretKey key){
+
+        Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
+                NotesDatabase.DatabaseContract.getTableColumns(),
+                null,
+                null,
+                null);
+
+        if (c != null) {
+            do {
+                c.moveToNext();
+                Note note = convertToNote(c);
+                decryptSingleNote(context, note, password, key);
+            } while (!c.isLast());
+        }
+    }
+
+    private void decryptSingleNote(Context context, Note note, String password, SecretKey key){
+        try {
+            ContentValues vals = new ContentValues();
+            String decryptedText = decrypt(note.text, password, key);
+            if (decryptedText == null) {
+                Toast.makeText(getApplicationContext(), "Error when decrypting " +
+                        note.text, Toast.LENGTH_SHORT).show();
+//                return;
+            }
+            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
+                    decryptedText);
+            ContentResolver resolver = context.getContentResolver();
+            String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+            String[] whereArgs = new String[] {note.id.toString()};
+
+            resolver.update(NotesDatabase.DatabaseContract.URI,
+                    vals,
+                    whereClause,
+                    whereArgs
+            );
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+        }
     }
 
     private String encrypt(byte[] data, String password, SecretKey key) throws UnsupportedEncodingException {
@@ -1105,7 +1167,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
 
-    private byte[] decrypt(String base64Data, String password, SecretKey key) throws UnsupportedEncodingException {
+    private String decrypt(String base64Data, String password, SecretKey key) throws UnsupportedEncodingException {
 
         Cipher cipher;
         ByteArrayOutputStream bos;
@@ -1117,7 +1179,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         byte[] part;
         byte[] partialSolution;
         byte[] partResult;
-        byte[] dataBytes = Base64.decode(base64Data.getBytes("UTF-8"), 0);
+        byte[] dataBytes = Base64.decode(base64Data.getBytes(), 0);
         try {
 
             cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
@@ -1142,7 +1204,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             partResult = cipher.doFinal(part);
             bos.write(partResult);
             Log.d(TAG, "Decrypted = " + new String(bos.toByteArray()));
-            return bos.toByteArray();
+            return new String(bos.toByteArray());
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
