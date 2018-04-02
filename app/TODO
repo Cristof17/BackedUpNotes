@@ -2,7 +2,15 @@ Upload files only if they are encrypted
 Add/Edit notes only if they are unencrypted
 Delete notes even if they are encrypted or decrypted.
 User should select number(weak encryption but easy to remember) or password for encryption
-(strong for encryption but harder to remember).
+(strong for encryption but harder to remember). Show what happens if you forget the password
+
+After decryption if the data looks ok (stored in preference manager) updateUI
+After decryption if the data does not look ok (stored in preference manager) show help button
+Show to reverse the decryption with the same password if the data does not look ok. And try
+another decryption password
+
+Large note test (Encrypt on another thread, EditNote on another thread, Load adapter notes
+on another thread)
 
 
 

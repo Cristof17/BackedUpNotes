@@ -21,22 +21,30 @@
                 android:layout_height="match_parent"
                 android:id="@+id/activity_notes_list_toolbar">
 
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/notes_list_activity_add_note_btn"
+                    android:layout_alignParentRight="true"
                     android:text = "New"/>
 
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/notes_list_activity_login_btn"
-                    android:text = "Login"/>
+                    android:text = "Login"
+                    android:layout_alignParentLeft="true"/>
+
 
                 <Button
                     android:id="@+id/notes_list_activity_upload_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
                     android:text="Save"/>
 
 
@@ -44,8 +52,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/notes_list_activity_logout_btn"
+                    android:layout_alignParentRight="true"
                     android:text = "Logout"/>
 
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/notes_list_activity_reverse_decrypt_btn"
+                    android:layout_alignParentRight="true"
+                    android:text = "Reverse"/>
+
+                </RelativeLayout>
 
             </android.support.v7.widget.Toolbar>
         </android.support.design.widget.AppBarLayout>

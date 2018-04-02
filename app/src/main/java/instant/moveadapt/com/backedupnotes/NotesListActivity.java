@@ -148,6 +148,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private Button uploadButton;
     private Button logoutButton;
     private FloatingActionButton encryptButton;
+    private Button reverseDecryptionButton;
 
     /*
      * UI For authentication
@@ -206,6 +207,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private AlertDialog encryptionPassDialog;
 
     /*
+     * Password is stored for reversing the decryption process
+     */
+    private String decryptionPass;
+    /*
      * Execution comes here when the app is started and the activity created
      *
      */
@@ -226,6 +231,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
         logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
         addButton = (Button) findViewById(R.id.notes_list_activity_add_note_btn);
+        reverseDecryptionButton = (Button) findViewById(R.id.notes_list_activity_reverse_decrypt_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -291,12 +297,19 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onClick(View v) {
 
-                boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.areEncrypted(getApplicationContext());
-                if (areEncrypted){
+                if (notesAreEncrypted()){
                     (encryptionPassDialog = createEncryptPassDialog("Decrypt")).show();
                 } else {
                     (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
                 }
+            }
+        });
+
+        reverseDecryptionButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+                createReverseDecryptionDialog().show();
             }
         });
 
@@ -418,8 +431,57 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public void onChange(boolean selfChange, Uri uri) {
                 notesAdapter.resetCursor();
                 notesAdapter.notifyDataSetChanged();
+                updateUIAccordingToEncryptionStatus();
             }
         };
+
+        updateUIAccordingToEncryptionStatus();
+    }
+
+    private AlertDialog createReverseDecryptionDialog() {
+
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View rootView = inflater.inflate(R.layout.reverse_decryption_alert_dialog_layout, null, false);
+        alertBuilder.setView(rootView);
+        final TextView warningTextView = (TextView) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
+        alertBuilder.setPositiveButton("Looks good", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                looksGood();
+                updateUIAccordingToEncryptionStatus();
+            }
+        });
+        alertBuilder.setNegativeButton("Reverse", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                reverseEncryption();
+            }
+        });
+
+        return alertBuilder.create();
+    }
+
+    private void looksGood() {
+        decryptionPass = null;
+    }
+
+    private void reverseEncryption() {
+        SecretKey key = getKey(getApplicationContext());
+        encryptAllNotes(getApplicationContext(), decryptionPass, key);
+        decryptionPass = null;
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                getApplicationContext(),
+                false);
+    }
+
+    /*
+     * See if the notes are encrypted
+     */
+    private boolean notesAreEncrypted(){
+        boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.
+                areEncrypted(getApplicationContext());
+        return areEncrypted;
     }
 
     private void deleteNotesToBeDeletedFromCloud() {
@@ -463,6 +525,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         notesAdapter.resetCursor();
         notesAdapter.notifyDataSetChanged();
+        updateUIAccordingToEncryptionStatus();
     }
 
     //TODO Remove
@@ -539,6 +602,35 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
         FirebaseAuth.getInstance().signOut();
+    }
+
+    private void updateUIAccordingToEncryptionStatus(){
+        if (notesAreEncrypted()){
+            loginButton.setVisibility(View.VISIBLE);
+            uploadButton.setVisibility(View.VISIBLE);
+            logoutButton.setVisibility(View.VISIBLE);
+            addButton.setVisibility(View.INVISIBLE);
+            reverseDecryptionButton.setVisibility(View.INVISIBLE);
+        }else{
+            reverseDecryptionButton.setVisibility(View.VISIBLE);
+            if (notesAreCorrectlyDecrypted()) {
+                loginButton.setVisibility(View.INVISIBLE);
+                uploadButton.setVisibility(View.INVISIBLE);
+                logoutButton.setVisibility(View.INVISIBLE);
+                addButton.setVisibility(View.VISIBLE);
+                reverseDecryptionButton.setVisibility(View.INVISIBLE);
+            }else{
+                loginButton.setVisibility(View.INVISIBLE);
+                uploadButton.setVisibility(View.INVISIBLE);
+                logoutButton.setVisibility(View.INVISIBLE);
+                addButton.setVisibility(View.INVISIBLE);
+                reverseDecryptionButton.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private boolean notesAreCorrectlyDecrypted(){
+        return decryptionPass == null;
     }
 
     @Override
@@ -993,11 +1085,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void onEncryptSelected(String password) {
 
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 10000; ++i) {
-            builder.append("a");
-        }
-
         generateKey(getApplicationContext());
         SecretKey key = getKey(getApplicationContext());
         if (key != null) {
@@ -1052,12 +1139,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private void encryptSingleNote(Context context, Note note, String password, SecretKey key){
         try {
             ContentValues vals = new ContentValues();
-            //TODO Remove after testing encryption and UI
-            StringBuilder encBuilder = new StringBuilder();
-            for (int i = 0; i < 100000; ++i){
-                encBuilder.append(note.text);
-            }
-            String encryptedText = encrypt(encBuilder.toString().getBytes("UTF-8"), password, key);
+            String encryptedText = encrypt(note.text.getBytes("UTF-8"), password, key);
             if (encryptedText == null) {
                 Toast.makeText(getApplicationContext(), "Error when encrypting " +
                 note.text, Toast.LENGTH_SHORT).show();
@@ -1084,6 +1166,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     private void decryptAllNotes(Context context, String password, SecretKey key){
 
+        decryptionPass = password;
         Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
                 null,

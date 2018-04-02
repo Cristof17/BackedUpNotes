@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ import instant.moveadapt.com.backedupnotes.EditNoteActivity;
 import instant.moveadapt.com.backedupnotes.NewNoteActivity;
 import instant.moveadapt.com.backedupnotes.NotesListActivity;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
+import instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.R;
 
 /**
@@ -108,11 +110,28 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                  * If it hasn't been fired
                  */
                 if (context.actionMode == null) {
-                    Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
-                    Bundle extras = new Bundle();
-                    extras.putParcelable("note", holder.note);
-                    editNoteIntent.putExtras(extras);
-                    context.startActivity(editNoteIntent);
+
+                    /*
+                     * Check if the notes are encrypted
+                     */
+                    if (notesAreEncrypted()){
+                        /*
+                         * Do not allow editting show the message to decrypt first
+                         */
+                        Toast.makeText(context, "Notes need to be decrypted to be edited",
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    } else {
+                        /*
+                         * Edit the note
+                         */
+                        Intent editNoteIntent = new Intent(context, EditNoteActivity.class);
+                        Bundle extras = new Bundle();
+                        extras.putParcelable("note", holder.note);
+                        editNoteIntent.putExtras(extras);
+                        context.startActivity(editNoteIntent);
+                    }
+
                 }else{
 
                     /*
@@ -150,6 +169,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         }else{
             rootView.setSelected(false);
         }
+    }
+
+    private boolean notesAreEncrypted(){
+        boolean areEncrypted = PreferenceManager.areEncrypted(context);
+        return areEncrypted;
     }
 
     @Override
