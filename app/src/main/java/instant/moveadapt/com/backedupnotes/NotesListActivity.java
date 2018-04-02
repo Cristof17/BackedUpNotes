@@ -11,8 +11,11 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.security.keystore.KeyGenParameterSpec;
@@ -207,6 +210,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
      * Execution comes here when the app is started and the activity created
      *
      */
+    private ContentObserver databaseContentObserver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -412,6 +416,24 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         };
 
         deleteNotesToBeDeletedFromCloud();
+
+        databaseContentObserver = new ContentObserver(new Handler()) {
+            @Override
+            public boolean deliverSelfNotifications() {
+                return super.deliverSelfNotifications();
+            }
+
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+            }
+
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                notesAdapter.resetCursor();
+                notesAdapter.notifyDataSetChanged();
+            }
+        };
     }
 
     private void deleteNotesToBeDeletedFromCloud() {
@@ -1051,6 +1073,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
                     encryptedText);
             ContentResolver resolver = context.getContentResolver();
+            resolver.registerContentObserver(NotesDatabase.DatabaseContract.URI,
+                    false,
+                    databaseContentObserver);
             String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
             String[] whereArgs = new String[] {note.id.toString()};
 
@@ -1093,6 +1118,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
                     decryptedText);
             ContentResolver resolver = context.getContentResolver();
+            resolver.registerContentObserver(NotesDatabase.DatabaseContract.URI,
+                    false,
+                    databaseContentObserver);
             String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
             String[] whereArgs = new String[] {note.id.toString()};
 
