@@ -1,0 +1,8 @@
+Upload files only if they are encrypted
+Add/Edit notes only if they are unencrypted
+Delete notes even if they are encrypted or decrypted.
+User should select number(weak encryption but easy to remember) or password for encryption
+(strong for encryption but harder to remember).
+
+
+

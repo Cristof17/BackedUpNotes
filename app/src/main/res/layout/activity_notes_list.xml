@@ -24,14 +24,8 @@
                 <Button
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/gen_key_button"
-                    android:text="Key"/>
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/notes_list_activity_encrypt_btn"
-                    android:text = "Encrypt"/>
+                    android:id="@+id/notes_list_activity_add_note_btn"
+                    android:text = "New"/>
 
                 <Button
                     android:layout_width="wrap_content"
@@ -70,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
-            android:id="@+id/add_note_button"
+            android:id="@+id/notes_list_activity_encrypt_btn"
             android:layout_margin="20dp"/>
 
         <android.support.v7.widget.RecyclerView

@@ -136,7 +136,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private static final String TAG = "[NOTE_LIST]";
     private static final String KEY_ALIAS = "cheiecric";
 
-    private FloatingActionButton addButton;
+    private Button addButton;
     private RecyclerView notesRecyclerView;
     private NoteListRecyclerViewAdapter notesAdapter;
 
@@ -147,8 +147,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private Button loginButton;
     private Button uploadButton;
     private Button logoutButton;
-    private Button encryptButton;
-    private Button genKeyButton;
+    private FloatingActionButton encryptButton;
 
     /*
      * UI For authentication
@@ -218,7 +217,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         setContentView(R.layout.activity_notes_list);
 
-        addButton = (FloatingActionButton) findViewById(R.id.add_note_button);
+        encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
@@ -226,8 +225,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
         uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
         logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
-        encryptButton = (Button) findViewById(R.id.notes_list_activity_encrypt_btn);
-        genKeyButton = (Button) findViewById(R.id.gen_key_button);
+        addButton = (Button) findViewById(R.id.notes_list_activity_add_note_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -265,10 +263,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onClick(View v) {
 
-//                showPhoneNumberDialog();
-                CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
-                btmSheet.setBottomSheetCallback(NotesListActivity.this);
-                btmSheet.show();
+                if (mAuth == null || mAuth.getCurrentUser() == null) {
+                    CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
+                    btmSheet.setBottomSheetCallback(NotesListActivity.this);
+                    btmSheet.show();
+                }else{
+                    Toast.makeText(getApplicationContext(), "Already logged in as " +
+                            mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -279,7 +281,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                     mAuth.signOut();
                     Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
                 }else{
-                    Toast.makeText(getApplicationContext(), "Not logged in ", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Please login first ", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -295,22 +297,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 } else {
                     (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
                 }
-            }
-        });
-
-        genKeyButton.setOnClickListener(new View.OnClickListener(){
-            /**
-             * Called when a view has been clicked.
-             *
-             * @param v The view that was clicked.
-             */
-            @Override
-            public void onClick(View v) {
-                String key = generateKey(getApplicationContext());
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                Log.d(TAG, "Key = " + key);
-                prefs.edit().putString("Key", key).commit();
-                Log.d(TAG, "Key back is " + prefs.getString("Key", null));
             }
         });
 
@@ -689,7 +675,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 Toast.makeText(getApplicationContext(), "No notes to save ", Toast.LENGTH_LONG).show();
             }
         } else {
-            Toast.makeText(getApplicationContext(), "Please login to save notes to cloud", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Please Register/Login first", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -752,6 +738,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                         try {
                             if (task.isSuccessful()) {
                                 Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
+                                Toast.makeText(getApplicationContext(), "Logged in as " +
+                                mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
                                 deleteNotesToBeDeletedFromCloud();
                             } else {
                                 Toast.makeText(getApplicationContext(), "Cannot login" + task.getException().getMessage(),
@@ -1064,7 +1052,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private void encryptSingleNote(Context context, Note note, String password, SecretKey key){
         try {
             ContentValues vals = new ContentValues();
-            String encryptedText = encrypt(note.text.getBytes("UTF-8"), password, key);
+            //TODO Remove after testing encryption and UI
+            StringBuilder encBuilder = new StringBuilder();
+            for (int i = 0; i < 100000; ++i){
+                encBuilder.append(note.text);
+            }
+            String encryptedText = encrypt(encBuilder.toString().getBytes("UTF-8"), password, key);
             if (encryptedText == null) {
                 Toast.makeText(getApplicationContext(), "Error when encrypting " +
                 note.text, Toast.LENGTH_SHORT).show();
@@ -1113,7 +1106,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             if (decryptedText == null) {
                 Toast.makeText(getApplicationContext(), "Error when decrypting " +
                         note.text, Toast.LENGTH_SHORT).show();
-//                return;
+                return;
             }
             vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
                     decryptedText);
