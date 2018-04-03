@@ -448,31 +448,40 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         alertBuilder.setPositiveButton("Looks good", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                looksGood();
+                looksGoodSelected();
                 updateUIAccordingToEncryptionStatus();
             }
         });
         alertBuilder.setNegativeButton("Reverse", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                reverseEncryption();
+                reverseDecryption();
             }
         });
 
         return alertBuilder.create();
     }
 
-    private void looksGood() {
-        decryptionPass = null;
+    private void looksGoodSelected() {
+        clearCachedPassword();
     }
 
-    private void reverseEncryption() {
+    private void clearCachedPassword(){
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(
+                getApplicationContext(), null);
+    }
+
+    private String getCachedPassword(){
+        return instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.getLooksGoodPassword(
+                getApplicationContext());
+
+    }
+
+    private void reverseDecryption() {
         SecretKey key = getKey(getApplicationContext());
-        encryptAllNotes(getApplicationContext(), decryptionPass, key);
-        decryptionPass = null;
-        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
-                getApplicationContext(),
-                false);
+        encryptAllNotes(getApplicationContext(), getCachedPassword(), key);
+        clearCachedPassword();
+        setEncrypted(true);
     }
 
     /*
@@ -630,7 +639,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     private boolean notesAreCorrectlyDecrypted(){
-        return decryptionPass == null;
+        return instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.getLooksGoodPassword(getApplicationContext()) == null;
     }
 
     @Override
@@ -1089,9 +1098,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         SecretKey key = getKey(getApplicationContext());
         if (key != null) {
             encryptAllNotes(getApplicationContext(), password, key);
-            instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
-                    getApplicationContext(),
-                    true);
         }
 
         if (encryptionPassDialog != null){
@@ -1101,15 +1107,19 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         notesAdapter.notifyDataSetChanged();
     }
 
+    private void setEncrypted(boolean encrypted) {
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                getApplicationContext(),
+                encrypted);
+    }
+
     @Override
     public void onDecryptSelected(String password) {
 
         SecretKey key = getKey(getApplicationContext());
         if (key != null) {
             decryptAllNotes(getApplicationContext(), password, key);
-            instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
-                    getApplicationContext(),
-                    false);
+            cachePassword(password);
         }
 
         if (encryptionPassDialog != null){
@@ -1121,6 +1131,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     public void encryptAllNotes(Context context, String password, SecretKey key){
 
+        setEncrypted(true);
         Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
                 null,
@@ -1164,9 +1175,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
+    private void cachePassword(String password){
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(getApplicationContext(),
+                password);
+    }
+
     private void decryptAllNotes(Context context, String password, SecretKey key){
 
-        decryptionPass = password;
+        setEncrypted(false);
         Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
                 null,

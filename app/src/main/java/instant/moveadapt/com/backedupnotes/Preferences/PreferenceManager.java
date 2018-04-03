@@ -27,6 +27,7 @@ import javax.crypto.SecretKey;
 public class PreferenceManager {
 
     private static final String ENCRYPTED_PREF = "ENCRYPTED_PREFERENCE";
+    private static final String ENCRYPTION_LOOKS_GOOD_PASSWORD ="ENCRYPTION_LOOKS_GOOD_PASSWORD";
 
     public static boolean areEncrypted(Context context){
         SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
@@ -36,5 +37,15 @@ public class PreferenceManager {
     public static void setEncrypted(Context context, boolean encrypted){
         SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
         prefs.edit().putBoolean(ENCRYPTED_PREF, encrypted).commit();
+    }
+
+    public static void setLooksGoodPassword(Context context, String passwordToStore){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putString(ENCRYPTION_LOOKS_GOOD_PASSWORD, passwordToStore).commit();
+    }
+
+    public static String getLooksGoodPassword(Context context){
+        SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(ENCRYPTION_LOOKS_GOOD_PASSWORD, null);
     }
 }
