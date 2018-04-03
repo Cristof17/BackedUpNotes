@@ -119,7 +119,15 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                          * Do not allow editting show the message to decrypt first
                          */
                         Toast.makeText(context, "Notes need to be decrypted to be edited",
-                                Toast.LENGTH_SHORT)
+                                Toast.LENGTH_LONG)
+                                .show();
+                    } else if (!notesAreCorrectlyDecrypted()) {
+                        /*
+                         * Do not allow editting show the check decryption first
+                         */
+                        Toast.makeText(context, "Do notes look good ? You need to do a checking first " +
+                                        "by pressing check button",
+                                Toast.LENGTH_LONG)
                                 .show();
                     } else {
                         /*
@@ -175,6 +183,11 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         boolean areEncrypted = PreferenceManager.areEncrypted(context);
         return areEncrypted;
     }
+
+    private boolean notesAreCorrectlyDecrypted(){
+        return instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.getLooksGoodPassword(context) == null;
+    }
+
 
     @Override
     public int getItemCount() {
