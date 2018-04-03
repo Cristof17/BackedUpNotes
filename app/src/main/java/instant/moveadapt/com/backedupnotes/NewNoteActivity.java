@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.EditText;
 
 import java.util.UUID;
@@ -43,6 +44,17 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     public void onBackPressed() {
 
         if (textEditText.getText().toString() != null
@@ -53,7 +65,7 @@ public class NewNoteActivity extends AppCompatActivity implements ContentObserve
              */
             AlertDialog.Builder builder = new AlertDialog.Builder(NewNoteActivity.this);
             builder.setTitle(R.string.save_note_text);
-            builder.setCancelable(false);
+            builder.setCancelable(true);
             builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
 
                 @Override

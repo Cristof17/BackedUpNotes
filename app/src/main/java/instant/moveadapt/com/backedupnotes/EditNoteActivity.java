@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,7 +64,7 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
          */
         AlertDialog.Builder builder = new AlertDialog.Builder(EditNoteActivity.this);
         builder.setTitle(R.string.save_note_text);
-        builder.setCancelable(false);
+        builder.setCancelable(true);
         builder.setPositiveButton(getString(R.string.yes_text), new DialogInterface.OnClickListener() {
 
             @Override
@@ -124,5 +125,16 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
          * data has been saved in the content provideer
          */
         EditNoteActivity.super.onBackPressed();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
