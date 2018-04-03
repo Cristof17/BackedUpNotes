@@ -90,7 +90,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         cursor.moveToPosition(position);
 
         Note nota = convertToNote(cursor);
-        textView.setText(nota.timestamp %1000000 + " " + nota.text);
+        textView.setText(nota.text);
 
         /*
          * Set the note for this viewHolder

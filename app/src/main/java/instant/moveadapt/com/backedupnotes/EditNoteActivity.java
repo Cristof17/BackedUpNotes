@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,12 +28,17 @@ public class EditNoteActivity extends AppCompatActivity implements ContentObserv
 
     EditText noteTextView;
     Note note;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_new_note_layout);
+        toolbar = (Toolbar) findViewById(R.id.activity_new_note_toolbar);
+        ((AppCompatActivity)this).setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("");
         noteTextView = (EditText) findViewById(R.id.new_note_edit_text);
 
         /*
