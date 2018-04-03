@@ -255,6 +255,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
+        uploadButton.setText("Backup");
         uploadButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -265,6 +266,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
+        loginButton.setText("Login");
         loginButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
@@ -280,6 +282,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
+        logoutButton.setVisibility(View.INVISIBLE);
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -636,6 +639,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 reverseDecryptionButton.setVisibility(View.VISIBLE);
             }
         }
+
+        //TODO Revise this
+        logoutButton.setVisibility(View.INVISIBLE);
     }
 
     private boolean notesAreCorrectlyDecrypted(){

@@ -37,7 +37,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/notes_list_activity_login_btn"
                     android:text = "Login"
-                    android:layout_alignParentLeft="true"/>
+                    android:layout_alignParentRight="true"/>
 
 
                 <Button
@@ -45,6 +45,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerHorizontal="true"
+                    android:layout_toLeftOf="@id/notes_list_activity_login_btn"
                     android:text="Save"/>
 
 
