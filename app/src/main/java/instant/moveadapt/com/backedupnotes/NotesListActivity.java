@@ -49,6 +49,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -136,7 +137,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private static final String TAG = "[NOTE_LIST]";
     private static final String KEY_ALIAS = "cheiecric";
 
-    private Button addButton;
     private RecyclerView notesRecyclerView;
     private NoteListRecyclerViewAdapter notesAdapter;
 
@@ -144,11 +144,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private AppBarLayout appBarLayout;
     private Toolbar toolbar;
 
-    private Button loginButton;
-    private Button uploadButton;
-    private Button logoutButton;
-    private FloatingActionButton encryptButton;
-    private Button reverseDecryptionButton;
+    private ImageButton encryptButton;
+//    private Button loginButton;
+//    private Button uploadButton;
+//    private Button logoutButton;
+    private FloatingActionButton actionButton;
+//    private Button reverseDecryptionButton;
 
     /*
      * UI For authentication
@@ -222,16 +223,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         setContentView(R.layout.activity_notes_list);
 
-        encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_btn);
+        actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
         toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
-        loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
-        uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
-        logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
-        addButton = (Button) findViewById(R.id.notes_list_activity_add_note_btn);
-        reverseDecryptionButton = (Button) findViewById(R.id.notes_list_activity_reverse_decrypt_btn);
+//        loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
+//        uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
+//        logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
+        encryptButton = (ImageButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
+//        reverseDecryptionButton = (Button) findViewById(R.id.notes_list_activity_reverse_decrypt_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
@@ -247,54 +248,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         setSupportActionBar(toolbar);
 
-        addButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                Intent startNewNoteIntent = new Intent(getApplicationContext(), NewNoteActivity.class);
-                startActivity(startNewNoteIntent);
-            }
-        });
-
-        uploadButton.setText("Backup");
-        uploadButton.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                FirebaseDatabase db = FirebaseDatabase.getInstance();
-                DatabaseReference notesDb = db.getReference();
-                saveNotesToCloud(notesDb);
-            }
-        });
-
-        loginButton.setText("Login");
-        loginButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                if (mAuth == null || mAuth.getCurrentUser() == null) {
-                    CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
-                    btmSheet.setBottomSheetCallback(NotesListActivity.this);
-                    btmSheet.show();
-                }else{
-                    Toast.makeText(getApplicationContext(), "Already logged in as " +
-                            mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        logoutButton.setVisibility(View.INVISIBLE);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mAuth != null && mAuth.getCurrentUser() != null){
-                    mAuth.signOut();
-                    Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
-                }else{
-                    Toast.makeText(getApplicationContext(), "Please login first ", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-
         encryptButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -308,13 +261,80 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
-        reverseDecryptionButton.setOnClickListener(new View.OnClickListener(){
+//        uploadButton.setText("Backup");
+//        uploadButton.setOnClickListener(new View.OnClickListener(){
+//
+//            @Override
+//            public void onClick(View v) {
+//                FirebaseDatabase db = FirebaseDatabase.getInstance();
+//                DatabaseReference notesDb = db.getReference();
+//                saveNotesToCloud(notesDb);
+//            }
+//        });
+
+//        loginButton.setText("Login");
+//        loginButton.setOnClickListener(new View.OnClickListener(){
+//            @Override
+//            public void onClick(View v) {
+//
+//                if (mAuth == null || mAuth.getCurrentUser() == null) {
+//                    CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
+//                    btmSheet.setBottomSheetCallback(NotesListActivity.this);
+//                    btmSheet.show();
+//                }else{
+//                    Toast.makeText(getApplicationContext(), "Already logged in as " +
+//                            mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+//                }
+//            }
+//        });
+
+//        logoutButton.setVisibility(View.INVISIBLE);
+//        logoutButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (mAuth != null && mAuth.getCurrentUser() != null){
+//                    mAuth.signOut();
+//                    Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
+//                }else{
+//                    Toast.makeText(getApplicationContext(), "Please login first ", Toast.LENGTH_LONG).show();
+//                }
+//            }
+//        });
+
+        actionButton.setOnClickListener(new View.OnClickListener(){
+
             @Override
             public void onClick(View v) {
 
-                createReverseDecryptionDialog().show();
+                if (notesAreEncrypted()){
+                    //show cloud icon
+                    if (mAuth == null || mAuth.getCurrentUser() == null) {
+                        CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
+                        btmSheet.setBottomSheetCallback(NotesListActivity.this);
+                        btmSheet.show();
+                    }else{
+                        Toast.makeText(getApplicationContext(), "Already logged in as " +
+                                mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+                    }
+
+                } else if (notesAreCorrectlyDecrypted()){
+                    //show add icon
+                    Intent startNewNoteIntent = new Intent(getApplicationContext(), NewNoteActivity.class);
+                    startActivity(startNewNoteIntent);
+                } else{
+                    //show checkbutton
+                    createReverseDecryptionDialog().show();
+                }
             }
         });
+
+//        reverseDecryptionButton.setOnClickListener(new View.OnClickListener(){
+//            @Override
+//            public void onClick(View v) {
+//
+//                createReverseDecryptionDialog().show();
+//            }
+//        });
 
         notesRecyclerView.setAdapter(notesAdapter);
 
@@ -561,8 +581,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 Log.d(TAG, "Permission for rd/wr to external storage is granted");
             } else {
                 Log.d(TAG, "Permission for rd/wr to external storag e is denied");
-                if (messageTextView !=  null && addButton != null && notesRecyclerView != null){
-                    addButton.setVisibility(View.INVISIBLE);
+                if (messageTextView !=  null && actionButton != null && notesRecyclerView != null){
+                    actionButton.setVisibility(View.INVISIBLE);
                     notesRecyclerView.setVisibility(View.INVISIBLE);
                     messageTextView.setVisibility(View.VISIBLE);
                     /*
@@ -618,30 +638,20 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     private void updateUIAccordingToEncryptionStatus(){
         if (notesAreEncrypted()){
-            loginButton.setVisibility(View.VISIBLE);
-            uploadButton.setVisibility(View.VISIBLE);
-            logoutButton.setVisibility(View.VISIBLE);
-            addButton.setVisibility(View.INVISIBLE);
-            reverseDecryptionButton.setVisibility(View.INVISIBLE);
+            encryptButton.setBackgroundResource(R.drawable.ic_lock_outline_white);
+            actionButton.setImageResource(R.drawable.ic_cloud_upload_white);
+            actionButton.setBackgroundResource(R.color.colorAccent);
         }else{
-            reverseDecryptionButton.setVisibility(View.VISIBLE);
             if (notesAreCorrectlyDecrypted()) {
-                loginButton.setVisibility(View.INVISIBLE);
-                uploadButton.setVisibility(View.INVISIBLE);
-                logoutButton.setVisibility(View.INVISIBLE);
-                addButton.setVisibility(View.VISIBLE);
-                reverseDecryptionButton.setVisibility(View.INVISIBLE);
-            }else{
-                loginButton.setVisibility(View.INVISIBLE);
-                uploadButton.setVisibility(View.INVISIBLE);
-                logoutButton.setVisibility(View.INVISIBLE);
-                addButton.setVisibility(View.INVISIBLE);
-                reverseDecryptionButton.setVisibility(View.VISIBLE);
+                encryptButton.setBackgroundResource(R.drawable.ic_lock_open_white);
+                actionButton.setImageResource(R.drawable.ic_add_white);
+                actionButton.setBackgroundResource(R.color.colorAccent);
+            }else if (!notesAreCorrectlyDecrypted()){
+                actionButton.setImageResource(R.drawable.ic_check_white);
+                actionButton.setBackgroundResource(R.color.warning);
+                encryptButton.setBackgroundResource(R.drawable.ic_lock_open_white);
             }
         }
-
-        //TODO Revise this
-        logoutButton.setVisibility(View.INVISIBLE);
     }
 
     private boolean notesAreCorrectlyDecrypted(){
