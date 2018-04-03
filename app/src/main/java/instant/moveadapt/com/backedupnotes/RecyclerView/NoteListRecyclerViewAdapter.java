@@ -179,6 +179,10 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         }
     }
 
+    public boolean hasNotes(){
+        return cursor != null && cursor.getCount() > 0;
+    }
+
     private boolean notesAreEncrypted(){
         boolean areEncrypted = PreferenceManager.areEncrypted(context);
         return areEncrypted;

@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -141,10 +142,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private NoteListRecyclerViewAdapter notesAdapter;
 
     private TextView messageTextView;
-    private AppBarLayout appBarLayout;
-    private Toolbar toolbar;
+//    private AppBarLayout appBarLayout;
+//    private Toolbar toolbar;
 
-    private ImageButton encryptButton;
+    private FloatingActionButton encryptButton;
 //    private Button loginButton;
 //    private Button uploadButton;
 //    private Button logoutButton;
@@ -226,12 +227,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
-        toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
+//        appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
+//        toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
 //        loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
 //        uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
 //        logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
-        encryptButton = (ImageButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
+        encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
 //        reverseDecryptionButton = (Button) findViewById(R.id.notes_list_activity_reverse_decrypt_btn);
 
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
@@ -246,7 +247,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             ActivityCompat.requestPermissions(NotesListActivity.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
-        setSupportActionBar(toolbar);
+//        setSupportActionBar(toolbar);
 
         encryptButton.setOnClickListener(new View.OnClickListener(){
 
@@ -313,8 +314,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                         btmSheet.setBottomSheetCallback(NotesListActivity.this);
                         btmSheet.show();
                     }else{
-                        Toast.makeText(getApplicationContext(), "Already logged in as " +
-                                mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+                        deleteNotesToBeDeletedFromCloud();
+                        updateCloudNotes();
                     }
 
                 } else if (notesAreCorrectlyDecrypted()){
@@ -351,7 +352,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 MenuInflater menuInflater = new MenuInflater(NotesListActivity.this);
                 menuInflater.inflate(R.menu.note_list_contextual_menu, menu);
-                appBarLayout.setVisibility(View.GONE);
+//                appBarLayout.setVisibility(View.GONE);
                 return true;
             }
 
@@ -389,7 +390,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public void onDestroyActionMode(ActionMode mode) {
                 actionMode = null;
                 notesAdapter.resetCursor();
-                appBarLayout.setVisibility(View.VISIBLE);
+//                appBarLayout.setVisibility(View.VISIBLE);
 
                 notesToDelete.clear();
                 notesAdapter.notifyDataSetChanged();
@@ -637,22 +638,37 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     private void updateUIAccordingToEncryptionStatus(){
+
         if (notesAreEncrypted()){
-            encryptButton.setBackgroundResource(R.drawable.ic_lock_outline_white);
+            encryptButton.setImageResource(R.drawable.ic_lock_outline_white);
+            encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             actionButton.setImageResource(R.drawable.ic_cloud_upload_white);
-            actionButton.setBackgroundResource(R.color.colorAccent);
+            actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
         }else{
             if (notesAreCorrectlyDecrypted()) {
-                encryptButton.setBackgroundResource(R.drawable.ic_lock_open_white);
                 actionButton.setImageResource(R.drawable.ic_add_white);
-                actionButton.setBackgroundResource(R.color.colorAccent);
+                actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
+                encryptButton.setImageResource(R.drawable.ic_lock_open_white);
+                encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             }else if (!notesAreCorrectlyDecrypted()){
                 actionButton.setImageResource(R.drawable.ic_check_white);
-                actionButton.setBackgroundResource(R.color.warning);
-                encryptButton.setBackgroundResource(R.drawable.ic_lock_open_white);
+                actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
+                encryptButton.setImageResource(R.drawable.ic_lock_open_white);
+                encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             }
         }
     }
+
+//    private void updateEncryptionStatus(){
+//        if (notesAdapter != null && notesAdapter.hasNotes()){
+//            //do nothing
+//        } else {
+//            if (notesAdapter != null && !notesAdapter.hasNotes()){
+//                setEncrypted(false);
+//                clearCachedPassword();
+//            }
+//        }
+//    }
 
     private boolean notesAreCorrectlyDecrypted(){
         return instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.getLooksGoodPassword(getApplicationContext()) == null;
@@ -858,6 +874,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                                 Toast.makeText(getApplicationContext(), "Logged in as " +
                                 mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
                                 deleteNotesToBeDeletedFromCloud();
+                                updateCloudNotes();
                             } else {
                                 Toast.makeText(getApplicationContext(), "Cannot login" + task.getException().getMessage(),
                                         Toast.LENGTH_LONG).show();
@@ -880,6 +897,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 e.printStackTrace();
             }
         }
+    }
+
+    private void updateCloudNotes() {
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        DatabaseReference notesDb = db.getReference();
+        saveNotesToCloud(notesDb);
     }
 
     @Override
