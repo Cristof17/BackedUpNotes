@@ -462,6 +462,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         updateUIAccordingToEncryptionStatus();
     }
 
+    private boolean isLoggedIn(){
+        if (mAuth != null && mAuth.getCurrentUser() != null){
+            return true;
+        }
+        return false;
+    }
+
     private AlertDialog createReverseDecryptionDialog() {
 
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
@@ -640,19 +647,26 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private void updateUIAccordingToEncryptionStatus(){
 
         if (notesAreEncrypted()){
-            encryptButton.setImageResource(R.drawable.ic_lock_outline_white);
+            if (!isLoggedIn()){
+                actionButton.setAlpha(0.6f);
+            }else{
+                actionButton.setAlpha(1.0f);
+            }
             encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            encryptButton.setImageResource(R.drawable.ic_lock_outline_white);
             actionButton.setImageResource(R.drawable.ic_cloud_upload_white);
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
         }else{
             if (notesAreCorrectlyDecrypted()) {
                 actionButton.setImageResource(R.drawable.ic_add_white);
                 actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
+                actionButton.setAlpha(1.0f);
                 encryptButton.setImageResource(R.drawable.ic_lock_open_white);
                 encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             }else if (!notesAreCorrectlyDecrypted()){
                 actionButton.setImageResource(R.drawable.ic_check_white);
                 actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
+                actionButton.setAlpha(1.0f);
                 encryptButton.setImageResource(R.drawable.ic_lock_open_white);
                 encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             }
@@ -875,11 +889,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                                 mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
                                 deleteNotesToBeDeletedFromCloud();
                                 updateCloudNotes();
+                                updateUIAccordingToEncryptionStatus();
                             } else {
                                 Toast.makeText(getApplicationContext(), "Cannot login" + task.getException().getMessage(),
                                         Toast.LENGTH_LONG).show();
                                 Log.d(TAG, task.getException().toString());
                                 Log.d(TAG, task.getResult().toString());
+                                updateUIAccordingToEncryptionStatus();
                             }
                         }catch (Exception e){
                             if (e instanceof FirebaseAuthInvalidCredentialsException){
