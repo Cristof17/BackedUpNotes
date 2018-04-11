@@ -88,6 +88,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -100,6 +101,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.BatchUpdateException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -262,46 +265,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             }
         });
 
-//        uploadButton.setText("Backup");
-//        uploadButton.setOnClickListener(new View.OnClickListener(){
-//
-//            @Override
-//            public void onClick(View v) {
-//                FirebaseDatabase db = FirebaseDatabase.getInstance();
-//                DatabaseReference notesDb = db.getReference();
-//                saveNotesToCloud(notesDb);
-//            }
-//        });
-
-//        loginButton.setText("Login");
-//        loginButton.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View v) {
-//
-//                if (mAuth == null || mAuth.getCurrentUser() == null) {
-//                    CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
-//                    btmSheet.setBottomSheetCallback(NotesListActivity.this);
-//                    btmSheet.show();
-//                }else{
-//                    Toast.makeText(getApplicationContext(), "Already logged in as " +
-//                            mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//        });
-
-//        logoutButton.setVisibility(View.INVISIBLE);
-//        logoutButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if (mAuth != null && mAuth.getCurrentUser() != null){
-//                    mAuth.signOut();
-//                    Toast.makeText(getApplicationContext(), "Log out successful ", Toast.LENGTH_LONG).show();
-//                }else{
-//                    Toast.makeText(getApplicationContext(), "Please login first ", Toast.LENGTH_LONG).show();
-//                }
-//            }
-//        });
-
         actionButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -328,14 +291,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 }
             }
         });
-
-//        reverseDecryptionButton.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View v) {
-//
-//                createReverseDecryptionDialog().show();
-//            }
-//        });
 
         notesRecyclerView.setAdapter(notesAdapter);
 
@@ -393,7 +348,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 //                appBarLayout.setVisibility(View.VISIBLE);
 
                 notesToDelete.clear();
+                notesAdapter.resetCursor();
                 notesAdapter.notifyDataSetChanged();
+                if (notesAdapter.getItemCount() == 0){
+                    instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setEncrypted(
+                            getApplicationContext(),
+                            false);
+                    updateUIAccordingToEncryptionStatus();
+                }
             }
         };
 
@@ -460,6 +422,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         };
 
         updateUIAccordingToEncryptionStatus();
+        //TOOD Remove this
+        downloadNotesFromCloud();
     }
 
     private boolean isLoggedIn(){
@@ -807,14 +771,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                     null,
                     null);
 
-            if (c != null) {
+            if (c != null && c.getCount() > 0) {
                 do {
 
                     c.moveToNext();
                     Note currNote = convertToNote(c);
-                    String childName = mAuth.getCurrentUser().getUid();
-                    DatabaseReference ref = db.child(childName).child(currNote.id.toString());
-                    ref.setValue(currNote);
+                    saveSingleNoteToCloud(currNote);
 
                 } while (!c.isLast());
                 Log.d(TAG, "Uploaded notes");
@@ -824,6 +786,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         } else {
             Toast.makeText(getApplicationContext(), "Please Register/Login first", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void saveSingleNoteToCloud(Note currNote) {
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        DatabaseReference userDb = db.getReference();
+        String remoteNotesFolderName = getRemoteNotesFolder();
+        DatabaseReference ref = userDb.child(remoteNotesFolderName).child(currNote.id.toString());
+        ref.setValue(currNote);
     }
 
     public void deleteNoteFromCloud(Note note){
@@ -860,7 +830,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         String text = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
         long timestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP)));
-        UUID id = UUID.fromString(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID)));
+        String id = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID));
         n = new Note(id, text, timestamp);
 
         return n;
@@ -887,6 +857,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                                 Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
                                 Toast.makeText(getApplicationContext(), "Logged in as " +
                                 mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+                                downloadNotesFromCloud();
                                 deleteNotesToBeDeletedFromCloud();
                                 updateCloudNotes();
                                 updateUIAccordingToEncryptionStatus();
@@ -913,6 +884,58 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     *  TO download notes from cloud
+     *  the app first sends a dummy note and then
+     *  deletes the dummy note to record changes to
+     *  the remote real time db so that the valueChangeListener fires
+     */
+    private void downloadNotesFromCloud() {
+
+        if (mAuth != null && mAuth.getCurrentUser() != null){
+            //send dummy note
+            FirebaseDatabase db = FirebaseDatabase.getInstance();
+            DatabaseReference dbRef = db.getReference();
+            DatabaseReference childRef = dbRef.child(getRemoteNotesFolder());
+            childRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Iterable<DataSnapshot> data = dataSnapshot.getChildren();
+                    Iterator<DataSnapshot> dataIterator = data.iterator();
+                    while (dataIterator.hasNext()){
+                        Note currNote = dataIterator.next().getValue(Note.class);
+                        saveNoteLocally(currNote);
+
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+            sendDummyNote();
+        }
+
+    }
+
+    private void sendDummyNote() {
+
+        Note dummyNote = new Note(UUID.randomUUID().toString(), "Dummy", -1);
+        saveSingleNoteToCloud(dummyNote);
+        deleteNoteFromCloud(dummyNote);
+    }
+
+    private void saveNoteLocally(Note note) {
+
+        ContentResolver contentResolver = getContentResolver();
+        ContentValues vals = new ContentValues();
+        vals.put(NotesDatabase.DatabaseContract._ID, note.id.toString());
+        vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, note.text);
+        vals.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, note.timestamp);
+        contentResolver.insert(NotesDatabase.DatabaseContract.URI, vals);
     }
 
     private void updateCloudNotes() {
@@ -1193,7 +1216,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 null,
                 null);
 
-        if (c != null) {
+        if (c != null && c.getCount() > 0) {
             do {
                 c.moveToNext();
                 Note note = convertToNote(c);
@@ -1244,7 +1267,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 null,
                 null);
 
-        if (c != null) {
+        if (c != null && c.getCount() > 0) {
             do {
                 c.moveToNext();
                 Note note = convertToNote(c);
@@ -1399,6 +1422,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    public String getRemoteNotesFolder() {
+        if (mAuth != null && mAuth.getCurrentUser() != null){
+            String childName = mAuth.getCurrentUser().getUid();
+            return childName;
+        }
         return null;
     }
 }

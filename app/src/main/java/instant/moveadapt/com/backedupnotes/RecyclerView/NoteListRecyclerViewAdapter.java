@@ -250,7 +250,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
 
         String text = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
         long timestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP)));
-        UUID id = UUID.fromString(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID)));
+        String id = (c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID)));
         n = new Note(id, text, timestamp);
 
         return n;

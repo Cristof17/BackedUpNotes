@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class Note implements Parcelable, Comparable<Note>{
 
-    public UUID id;
+    public String id;
     public String text;
     public Long timestamp;
 
@@ -23,17 +23,17 @@ public class Note implements Parcelable, Comparable<Note>{
         this.timestamp = null;
     }
 
-    public Note(UUID id, String text, long timestamp) {
+    public Note(String id, String text, long timestamp) {
         this.id = id;
         this.text = text;
         this.timestamp = timestamp;
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -78,7 +78,7 @@ public class Note implements Parcelable, Comparable<Note>{
                 @Override
                 public Note createFromParcel(Parcel source) {
 
-                    UUID parcelId = UUID.fromString(source.readString());
+                    String parcelId = source.readString();
                     String parcelText = new String(source.readString());
                     long parcelTimestamp = source.readLong();
 
