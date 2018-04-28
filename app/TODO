@@ -1,8 +1,9 @@
-Upload files only if they are encrypted
-Add/Edit notes only if they are unencrypted
-Delete notes even if they are encrypted or decrypted.
+Upload files only if they are encrypted (DONE)
+Add/Edit notes only if they are unencrypted (DONE)
+Delete notes even if they are encrypted or decrypted. (DONE)
 User should select number(weak encryption but easy to remember) or password for encryption
 (strong for encryption but harder to remember). Show what happens if you forget the password
+(NOT DONE, NOT GOING TO DO IT)
 
 After decryption if the data looks ok (stored in preference manager) updateUI
 After decryption if the data does not look ok (stored in preference manager) show help button
