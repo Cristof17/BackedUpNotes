@@ -28,6 +28,9 @@
         <activity android:name=".EditNoteActivity"
             android:parentActivityName=".NotesListActivity"/>
 
+        <activity android:name=".Crypt"
+            android:parentActivityName=".NotesListActivity"/>
+
         <provider
             android:authorities="instant.moveadapt.com.backedupnotes.notes;instant.moveadapt.com.backedupnotes.toBeDeleted"
             android:name=".Database.NotesContentProvider"/>

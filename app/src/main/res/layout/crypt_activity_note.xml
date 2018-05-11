@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:layout_alignParentTop="true"
+        android:inputType="textPassword"
+        android:gravity="center"
+        android:id="@+id/crypt_activity_tv_number"
+        android:layout_gravity="center_horizontal" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/crypt_activity_tv_number"
+        android:gravity="center"
+        android:layout_alignParentBottom="true"
+        android:background="#FF0000">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_1"
+                android:text="1"/>
+                <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="2"
+                android:id="@+id/crypt_activity_note_btn_2"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="3"
+                android:id="@+id/crypt_activity_note_btn_3"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent">
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="4"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_4"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="5"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_5"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="6"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_6"/>
+        </TableRow>
+
+
+        <TableRow
+            android:layout_width="match_parent">
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="7"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_7"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="8"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_8"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="9"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_9"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent">
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Del"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_del"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Done"
+                android:layout_weight="1"
+                android:id="@+id/crypt_activity_note_btn_done"/>
+        </TableRow>
+
+        </TableLayout>
+    </RelativeLayout>
+</RelativeLayout>

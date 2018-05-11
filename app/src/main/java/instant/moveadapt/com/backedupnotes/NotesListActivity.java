@@ -257,11 +257,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             @Override
             public void onClick(View v) {
 
-                if (notesAreEncrypted()){
-                    (encryptionPassDialog = createEncryptPassDialog("Decrypt")).show();
-                } else {
-                    (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
-                }
+//                if (notesAreEncrypted()){
+//                    (encryptionPassDialog = createEncryptPassDialog("Decrypt")).show();
+//                } else {
+//                    (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
+//                }
+
+                startActivityAccordingToDecryptionState();
             }
         });
 
@@ -637,6 +639,21 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
+    private void startActivityAccordingToDecryptionState(){
+        if (notesAreEncrypted()){
+            Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
+            startActivity(cryptIntent);
+        }else {
+            if (notesAreCorrectlyDecrypted()) {
+                Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
+                startActivity(cryptIntent);
+            } else if (!notesAreCorrectlyDecrypted()) {
+                Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
+                startActivity(cryptIntent);
+            }
+        }
+    }
+
 //    private void updateEncryptionStatus(){
 //        if (notesAdapter != null && notesAdapter.hasNotes()){
 //            //do nothing
@@ -948,6 +965,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public void onRegisterSelected(String email, String password) {
         Log.d(TAG, "Register selected");
 
+        startActivityAccordingToDecryptionState();
+
         if (credentialsDialog != null){
             credentialsDialog.dismiss();
         }else{
@@ -1002,6 +1021,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         final EditText usernameText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_username);
         final EditText passwordText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
         Button actionButton = (Button) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_btn);
+
 
         actionButton.setText(buttonText);
         actionButton.setOnClickListener(new View.OnClickListener(){
