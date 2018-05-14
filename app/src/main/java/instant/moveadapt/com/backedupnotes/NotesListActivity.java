@@ -1,6 +1,7 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,7 +9,10 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.ArraySet;
@@ -24,6 +28,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.widget.LinearLayout;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
@@ -77,6 +84,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
      */
     public ActionMode actionMode;
     public ActionMode.Callback actionModeCallback;
+    private CoordinatorLayout rootLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +96,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
+        rootLayout = (CoordinatorLayout)findViewById(R.id.notes_list_coordinator_layout);
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
         /*
@@ -232,6 +241,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         updateUIAccordingToEncryptionStatus();
 
         FirebaseAuth.getInstance().signOut();
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
     }
 
     private AlertDialog createReverseDecryptionDialog() {
@@ -442,5 +456,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         String notesToDeleteJson = gson.toJson(notesToDelete);
         outState.putString("notesToDelete", notesToDeleteJson);
         outState.putBoolean("actionMode", actionMode != null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 }

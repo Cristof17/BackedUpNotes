@@ -1,12 +1,20 @@
 package instant.moveadapt.com.backedupnotes;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -20,12 +28,14 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 
+import org.w3c.dom.Text;
+
 import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
 import instant.moveadapt.com.backedupnotes.Cloud.LoginCallback;
 import instant.moveadapt.com.backedupnotes.Cloud.RegisterCallback;
 import instant.moveadapt.com.backedupnotes.R;
 
-public class LoginActivity extends Activity implements View.OnClickListener, LoginCallback,
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener, LoginCallback,
         RegisterCallback{
 
     private static final String TAG = "LOGIN_ACTIVITY";
@@ -36,6 +46,8 @@ public class LoginActivity extends Activity implements View.OnClickListener, Log
     private RelativeLayout credentialsRelativeLayout;
     private RelativeLayout alreadyLoggedInRelativeLayout;
     private TextView messageTextView;
+    private Toolbar toolbar;
+    private CoordinatorLayout rootLayout;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,6 +61,8 @@ public class LoginActivity extends Activity implements View.OnClickListener, Log
         credentialsRelativeLayout = (RelativeLayout)findViewById(R.id.login_activity_credentials_rl);
         alreadyLoggedInRelativeLayout = (RelativeLayout)findViewById(R.id.login_layout_logged_in_message_rl);
         messageTextView = (TextView)findViewById(R.id.login_activity_already_logged_in_tv);
+        toolbar = (Toolbar)findViewById(R.id.login_activity_layout_toolbar);
+        rootLayout = (CoordinatorLayout)findViewById(R.id.login_activity_layout_cool);
         updateUIAccordingToLoginStatus();
 
         emailEditText.setText("conturicric@gmail.com");
@@ -56,6 +70,15 @@ public class LoginActivity extends Activity implements View.OnClickListener, Log
 
         loginButton.setOnClickListener(this);
         registerButton.setOnClickListener(this);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null){
+            getSupportActionBar().setTitle("");
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        FirebaseAuth.getInstance().signOut();
     }
 
     private void updateUIAccordingToLoginStatus() {
@@ -68,7 +91,8 @@ public class LoginActivity extends Activity implements View.OnClickListener, Log
             alreadyLoggedInRelativeLayout.setVisibility(View.INVISIBLE);
         }
     }
-    
+
+
     @Override
     public void onClick(View v) {
         if (v == loginButton){
@@ -101,25 +125,45 @@ public class LoginActivity extends Activity implements View.OnClickListener, Log
 
     @Override
     public void onLoginSuccessful() {
-        Log.d(TAG, "Login successful");
-        updateUIAccordingToLoginStatus();
+        showSnackbar("Logged in as " + CloudManager.getLoggedInEmail(), true);
     }
 
     @Override
     public void onLoginFailed(String response) {
-        Log.d(TAG, "Login failed " + response);
-        updateUIAccordingToLoginStatus();
+        showSnackbar(response, false);
     }
 
     @Override
     public void onRegisterSuccessful() {
-        Log.d(TAG, "Register successful");
-        updateUIAccordingToLoginStatus();
+        if (CloudManager.isLoggedIn()){
+            showSnackbar("Logged in as " + CloudManager.getLoggedInEmail(), true);
+        } else {
+            showSnackbar("Registration successful", true);
+        }
     }
 
     @Override
     public void onRegiserFailed(String message) {
-        Log.d(TAG, "Register failed " + message);
-        updateUIAccordingToLoginStatus();
+        showSnackbar(message, false);
+    }
+
+    private void showSnackbar(String message, final boolean canFinishActivity){
+        Snackbar bar = Snackbar.make(rootLayout, message,
+                Snackbar.LENGTH_LONG);
+        bar.setDuration(2000);
+        bar.addCallback(new Snackbar.Callback(){
+            @Override
+            public void onShown(Snackbar sb) {
+                super.onShown(sb);
+            }
+
+            @Override
+            public void onDismissed(Snackbar transientBottomBar, int event) {
+                super.onDismissed(transientBottomBar, event);
+                if (canFinishActivity)
+                    finish();
+            }
+        });
+        bar.show();
     }
 }

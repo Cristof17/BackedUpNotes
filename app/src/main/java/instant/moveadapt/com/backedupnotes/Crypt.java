@@ -5,6 +5,8 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,21 +25,23 @@ import javax.crypto.SecretKey;
  * Created by cristof on 11.05.2018.
  */
 
-public class Crypt extends Activity implements View.OnClickListener{
+public class Crypt extends AppCompatActivity implements View.OnClickListener{
 
-    Button btn0;
-    Button btn1;
-    Button btn2;
-    Button btn3;
-    Button btn4;
-    Button btn5;
-    Button btn6;
-    Button btn7;
-    Button btn8;
-    Button btn9;
-    Button delBtn;
-    Button doneBtn;
-    TextView text;
+    private Button btn0;
+    private Button btn1;
+    private Button btn2;
+    private Button btn3;
+    private Button btn4;
+    private Button btn5;
+    private Button btn6;
+    private Button btn7;
+    private Button btn8;
+    private Button btn9;
+    private Button delBtn;
+    private Button doneBtn;
+    private TextView text;
+    private Toolbar toolbar;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +60,8 @@ public class Crypt extends Activity implements View.OnClickListener{
         doneBtn = (Button)findViewById(R.id.crypt_activity_note_btn_done);
         delBtn = (Button)findViewById(R.id.crypt_activity_note_btn_del);
         text = (TextView)findViewById(R.id.crypt_activity_tv_number);
+        toolbar = (Toolbar)findViewById(R.id.crypt_activity_note_layout_toolbar);
+        setSupportActionBar(toolbar);
 
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
@@ -68,12 +74,18 @@ public class Crypt extends Activity implements View.OnClickListener{
         btn9.setOnClickListener(this);
         btn0.setOnClickListener(this);
 
-
         delBtn.setOnClickListener(this);
         doneBtn.setOnClickListener(this);
 
         if (savedInstanceState != null){
             text.setText(savedInstanceState.get("TEXT").toString());
+        }
+
+        if (getSupportActionBar() != null){
+            getSupportActionBar().setTitle("");
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }
 
@@ -134,7 +146,6 @@ public class Crypt extends Activity implements View.OnClickListener{
             if (text.getText().equals("") ||
                     text.getText().length() == 0 ||
                     text.getText() == null){
-                Toast.makeText(getApplicationContext(), "Nothing to delete", Toast.LENGTH_SHORT).show();
             } else {
                 String currentText = text.getText().toString();
                 String newText = currentText.substring(0, currentText.length()-1);

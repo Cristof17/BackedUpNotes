@@ -12,65 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!--
-        <android.support.design.widget.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/action_bar_size"
-            android:id="@+id/activity_notes_list_appbarlayout">
-
-            <android.support.v7.widget.Toolbar
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:id="@+id/activity_notes_list_toolbar">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-                <ImageButton
-                    android:layout_width="27dp"
-                    android:layout_height="27dp"
-                    android:layout_marginRight="20dp"
-                    android:layout_alignParentRight="true"
-                    android:text = "Encrypt"
-                    android:layout_centerVertical="true"/>
-                    -->
-<!--
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/notes_list_activity_login_btn"
-                    android:text = "Login"
-                    android:layout_alignParentRight="true"/>
-
-
-                <Button
-                    android:id="@+id/notes_list_activity_upload_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_toLeftOf="@id/notes_list_activity_login_btn"
-                    android:text="Save"/>
-
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/notes_list_activity_logout_btn"
-                    android:layout_alignParentRight="true"
-                    android:text = "Logout"/>
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/notes_list_activity_reverse_decrypt_btn"
-                    android:layout_alignParentRight="true"
-                    android:text = "Check"/>
-                </RelativeLayout>
-
-            </android.support.v7.widget.Toolbar>
-        </android.support.design.widget.AppBarLayout>
-        -->
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
