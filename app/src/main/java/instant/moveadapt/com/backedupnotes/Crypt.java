@@ -120,12 +120,15 @@ public class Crypt extends Activity implements View.OnClickListener{
                 return;
 
             if (notesAreEncrypted()){
+                cachePassword(text.getText().toString());
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
                 EncryptManager.decryptAllNotes(getApplicationContext(), text.getText().toString(), key);
+                finish();
             } else {
                 EncryptManager.generateKey(getApplicationContext());
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
                 EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key);
+                finish();
             }
 
         } else if (v == delBtn){
@@ -139,6 +142,11 @@ public class Crypt extends Activity implements View.OnClickListener{
                 text.setText(newText);
             }
         }
+    }
+
+    private void cachePassword(String password){
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(getApplicationContext(),
+                password);
     }
 
     /*

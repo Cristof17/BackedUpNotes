@@ -478,8 +478,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private void reverseDecryption() {
         SecretKey key = EncryptManager.getKey(getApplicationContext());
         EncryptManager.encryptAllNotes(getApplicationContext(), getCachedPassword(), key);
-        clearCachedPassword();
         EncryptManager.setEncrypted(getApplicationContext(), true);
+        clearCachedPassword();
+        if (notesAdapter != null){
+            notesAdapter.resetCursor();
+            notesAdapter.notifyDataSetChanged();
+            updateUIAccordingToEncryptionStatus();
+        }
     }
 
     private Note convertToNote(Cursor c){
@@ -1113,11 +1118,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void onDecryptSelected(String password) {
 
-    }
-
-    private void cachePassword(String password){
-        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(getApplicationContext(),
-                password);
     }
 
     public String getRemoteNotesFolder() {
