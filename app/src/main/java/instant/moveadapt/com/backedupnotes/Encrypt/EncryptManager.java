@@ -157,7 +157,7 @@ public class EncryptManager {
         }
     }
 
-    private static void decryptAllNotes(Context context, String password, SecretKey key){
+    public static void decryptAllNotes(Context context, String password, SecretKey key){
 
         setEncrypted(context, false);
         Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,

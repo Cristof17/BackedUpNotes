@@ -6,8 +6,10 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,8 +58,6 @@ public class Crypt extends Activity implements View.OnClickListener{
         delBtn = (Button)findViewById(R.id.crypt_activity_note_btn_del);
         text = (TextView)findViewById(R.id.crypt_activity_tv_number);
 
-        delBtn.setOnClickListener(this);
-
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
         btn3.setOnClickListener(this);
@@ -68,6 +68,10 @@ public class Crypt extends Activity implements View.OnClickListener{
         btn8.setOnClickListener(this);
         btn9.setOnClickListener(this);
         btn0.setOnClickListener(this);
+
+
+        delBtn.setOnClickListener(this);
+        doneBtn.setOnClickListener(this);
 
         if (savedInstanceState != null){
             text.setText(savedInstanceState.get("TEXT").toString());
@@ -109,6 +113,20 @@ public class Crypt extends Activity implements View.OnClickListener{
             newString = newString + 9;
             text.setText(newString);
         } else if (v == doneBtn){
+            //if this condition becomes true there is no point in
+            //making the ecryption/decryption
+            if (text.getText() == null ||
+                    text.getText().equals(""))
+                return;
+
+            if (notesAreEncrypted()){
+                SecretKey key = EncryptManager.getKey(getApplicationContext());
+                EncryptManager.decryptAllNotes(getApplicationContext(), text.getText().toString(), key);
+            } else {
+                EncryptManager.generateKey(getApplicationContext());
+                SecretKey key = EncryptManager.getKey(getApplicationContext());
+                EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key);
+            }
 
         } else if (v == delBtn){
             if (text.getText().equals("") ||
