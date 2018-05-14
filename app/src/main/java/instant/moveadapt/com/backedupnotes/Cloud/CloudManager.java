@@ -55,7 +55,7 @@ public class CloudManager {
                         if (task.isSuccessful()) {
                             downloadNotesFromCloud(context);
                             deleteNotesToBeDeletedFromCloud(context);
-                            updateCloudNotes(context);
+                            updateCloudNotes(context, null, null);
                             loginCallback.onLoginSuccessful();
                         } else {
                             Log.d(TAG, task.getException().toString());
@@ -134,19 +134,30 @@ public class CloudManager {
         if (mAuth == null || mAuth.getCurrentUser() == null)
             return;
         Note dummyNote = new Note(UUID.randomUUID().toString(), "Dummy", -1);
-        saveSingleNoteToCloud(dummyNote);
+        saveSingleNoteToCloud(dummyNote, null);
         deleteNoteFromCloud(context, dummyNote);
     }
 
-    private static void saveSingleNoteToCloud(Note currNote) {
+    private static void saveSingleNoteToCloud(final Note currNote, final NoteUploadedCallback updateCallback) {
+
         if (currNote == null)
             return;
 
+        Log.d(TAG, "Save single note to cloud");
         FirebaseDatabase db = FirebaseDatabase.getInstance();
         DatabaseReference userDb = db.getReference();
         String remoteNotesFolderName = getRemoteNotesFolder();
         DatabaseReference ref = userDb.child(remoteNotesFolderName).child(currNote.id.toString());
-        ref.setValue(currNote);
+        ref.setValue(currNote).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isComplete() && task.isSuccessful()){
+                    if (updateCallback != null) {
+                        updateCallback.onNoteUploaded(currNote);
+                    }
+                }
+            }
+        });
     }
 
     public static void deleteNoteFromCloud(Context context, Note note){
@@ -205,26 +216,25 @@ public class CloudManager {
         }
     }
 
-    public static void updateCloudNotes(Context context) {
+    public static void updateCloudNotes(Context context, StartUploadCallback startCallback,
+                                        NoteUploadedCallback updateCallback) {
         if (context == null)
             return;
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         if (mAuth == null || mAuth.getCurrentUser() == null)
             return;
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        DatabaseReference notesDb = db.getReference();
-        saveNotesToCloud(context);
+
+        saveNotesToCloud(context, startCallback, updateCallback);
     }
 
-    public static void saveNotesToCloud(Context context){
-
+    public static void saveNotesToCloud(Context context, StartUploadCallback startUploadCallback,
+                                        NoteUploadedCallback updateCallback){
+        Log.d(TAG, "Save note to cloud");
         if (context == null)
             return;
-
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         if (mAuth == null || mAuth.getCurrentUser() == null)
             return;
-
         if (mAuth != null && mAuth.getCurrentUser() != null) {
             Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                     NotesDatabase.DatabaseContract.getTableColumns(),
@@ -232,13 +242,14 @@ public class CloudManager {
                     null,
                     null);
 
+            if (startUploadCallback != null)
+                startUploadCallback.onStartUpload(c.getCount());
+
             if (c != null && c.getCount() > 0) {
                 do {
-
                     c.moveToNext();
                     Note currNote = NoteManager.convertToNote(c);
-                    saveSingleNoteToCloud(currNote);
-
+                    saveSingleNoteToCloud(currNote, updateCallback);
                 } while (!c.isLast());
                 Log.d(TAG, "Uploaded notes");
             }

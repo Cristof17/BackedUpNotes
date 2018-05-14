@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
+import android.annotation.TargetApi;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,13 +42,17 @@ import java.lang.reflect.Type;
 import java.util.Set;
 import javax.crypto.SecretKey;
 import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
+import instant.moveadapt.com.backedupnotes.Cloud.NoteUploadedCallback;
+import instant.moveadapt.com.backedupnotes.Cloud.StartUploadCallback;
+import instant.moveadapt.com.backedupnotes.Database.DatabaseManager;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.Encrypt.EncryptManager;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
-public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback{
+public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback,
+        StartUploadCallback, NoteUploadedCallback{
 
     /*
      * Permission requests code
@@ -58,6 +64,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private RecyclerView notesRecyclerView;
     private NoteListRecyclerViewAdapter notesAdapter;
     private TextView messageTextView;
+    private LinearLayout popUpLinearLayout;
+    private ProgressBar popUpProgressBar;
 
     private FloatingActionButton encryptButton;
     private FloatingActionButton actionButton;
@@ -98,6 +106,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
         rootLayout = (CoordinatorLayout)findViewById(R.id.notes_list_coordinator_layout);
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
+        popUpLinearLayout = (LinearLayout)findViewById(R.id.activity_notes_list_popup_ll);
+        popUpProgressBar = (ProgressBar) findViewById(R.id.activity_notes_list_popup_pb);
+        popUpLinearLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                popUpLinearLayout.setTranslationY(-popUpLinearLayout.getMeasuredHeight());
+            }
+        });
 
         /*
          *  Request permission for android 6.0 and upwards
@@ -129,7 +145,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                         startActivity(loginIntent);
                     }else{
                         CloudManager.deleteNotesToBeDeletedFromCloud(getApplicationContext());
-                        CloudManager.updateCloudNotes(getApplicationContext());
+                        CloudManager.updateCloudNotes(getApplicationContext(), NotesListActivity.this, NotesListActivity.this);
                     }
 
                 } else if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
@@ -206,6 +222,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             getApplicationContext(),
                             false);
                     updateUIAccordingToEncryptionStatus();
+                    encryptButton.setEnabled(false);
                 }
             }
         };
@@ -461,5 +478,60 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     protected void onResume() {
         super.onResume();
+        if(DatabaseManager.getNotesCount(getApplicationContext()) == 0){
+            encryptButton.setEnabled(false);
+        } else {
+            encryptButton.setEnabled(true);
+        }
+    }
+
+    @Override
+    public void onNoteUploaded(Note note) {
+        popUpProgressBar.setProgress(popUpProgressBar.getProgress() + 1);
+        if (popUpProgressBar.getProgress() == popUpProgressBar.getMax())
+            reverseAnimateViews();
+
+    }
+
+    @Override
+    public void onStartUpload(int count) {
+        popUpProgressBar.setMax(count);
+        if (popUpLinearLayout.getMeasuredHeight() > 0) {
+            animateViews();
+        }
+    }
+
+    private void animateViews() {
+        ObjectAnimator recyclerViewAnimtor = ObjectAnimator.ofFloat(notesRecyclerView,
+                "translationY",
+                0, popUpLinearLayout.getMeasuredHeight());
+        recyclerViewAnimtor.setDuration(300);
+        recyclerViewAnimtor.setInterpolator(new AccelerateInterpolator());
+
+        ObjectAnimator popUpAnimator = ObjectAnimator.ofFloat(popUpLinearLayout,
+                "translationY",
+                -popUpLinearLayout.getMeasuredHeight(), 0);
+        popUpAnimator.setDuration(300);
+        popUpAnimator.setInterpolator(new AccelerateInterpolator());
+
+        recyclerViewAnimtor.start();
+        popUpAnimator.start();
+    }
+
+    public void reverseAnimateViews(){
+        ObjectAnimator recyclerViewAnimtor = ObjectAnimator.ofFloat(notesRecyclerView,
+                "translationY",
+                popUpLinearLayout.getMeasuredHeight(), 0);
+        recyclerViewAnimtor.setDuration(300);
+        recyclerViewAnimtor.setInterpolator(new AccelerateInterpolator());
+
+        ObjectAnimator popUpAnimator = ObjectAnimator.ofFloat(popUpLinearLayout,
+                "translationY",
+                0, -popUpLinearLayout.getMeasuredHeight() );
+        popUpAnimator.setDuration(300);
+        popUpAnimator.setInterpolator(new AccelerateInterpolator());
+
+        recyclerViewAnimtor.start();
+        popUpAnimator.start();
     }
 }
