@@ -1,41 +1,20 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.database.ContentObserver;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
-import android.preference.Preference;
-import android.preference.PreferenceManager;
-import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyProperties;
 import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.TypedArrayUtils;
 import android.support.v4.util.ArraySet;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
-import android.util.Base64;
 import android.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,93 +24,22 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import android.widget.Toast;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseException;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.PhoneAuthCredential;
-import com.google.firebase.auth.PhoneAuthProvider;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.security.AlgorithmParameters;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
-import java.sql.BatchUpdateException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import instant.moveadapt.com.backedupnotes.Cloud.BottomSheetCallback;
-import instant.moveadapt.com.backedupnotes.Cloud.CloudCredentialsBottomSheet;
-import instant.moveadapt.com.backedupnotes.Cloud.CloudOptionsBottomSheet;
-import instant.moveadapt.com.backedupnotes.Database.NotesContentProvider;
+import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
-import instant.moveadapt.com.backedupnotes.Encrypt.EncryptLayoutCallback;
 import instant.moveadapt.com.backedupnotes.Encrypt.EncryptManager;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
-public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback,
-        BottomSheetCallback, EncryptLayoutCallback{
+public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback{
 
     /*
      * Permission requests code
@@ -140,28 +48,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
 
     private static final String TAG = "[NOTE_LIST]";
-    private static final String KEY_ALIAS = "cheiecric";
-
     private RecyclerView notesRecyclerView;
     private NoteListRecyclerViewAdapter notesAdapter;
-
     private TextView messageTextView;
-//    private AppBarLayout appBarLayout;
-//    private Toolbar toolbar;
 
     private FloatingActionButton encryptButton;
-//    private Button loginButton;
-//    private Button uploadButton;
-//    private Button logoutButton;
     private FloatingActionButton actionButton;
-//    private Button reverseDecryptionButton;
-
-    /*
-     * UI For authentication
-     */
-    private static String phoneNumber;
-    private AlertDialog authenticateDialog;
-
 
     /*
      * In the adapter the rootViews for each list item
@@ -186,59 +78,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public ActionMode actionMode;
     public ActionMode.Callback actionModeCallback;
 
-    /*
-     * Firebase auth object (this is the object used to authenticate using
-     * credential object)
-     */
-    FirebaseAuth mAuth;
-
-    /*
-     * Firebase authentication callbacks
-     */
-    private PhoneAuthProvider.OnVerificationStateChangedCallbacks onVerificationStateChangedCallbacks;
-
-    /*
-     * Firebase updatedValue listener
-     */
-    private ValueEventListener databaseValueListener;
-
-    /*
-     * When user clicks login or register, an alert dialog appears
-     * with the credentials fields for the user to enter email and password
-     * and a button (Login/Register) which calls the onLoginSelected and
-     * onRegisterSelected
-     */
-    private AlertDialog credentialsDialog;
-
-    private AlertDialog encryptionPassDialog;
-
-    /*
-     * Password is stored for reversing the decryption process
-     */
-    private String decryptionPass;
-    /*
-     * Execution comes here when the app is started and the activity created
-     *
-     */
-    private ContentObserver databaseContentObserver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate()");
-
         setContentView(R.layout.activity_notes_list);
 
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-//        appBarLayout = (AppBarLayout) findViewById(R.id.activity_notes_list_appbarlayout);
-//        toolbar = (Toolbar) appBarLayout.findViewById(R.id.activity_notes_list_toolbar);
-//        loginButton = (Button) findViewById(R.id.notes_list_activity_login_btn);
-//        uploadButton = (Button) findViewById(R.id.notes_list_activity_upload_btn);
-//        logoutButton = (Button) findViewById(R.id.notes_list_activity_logout_btn);
         encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
-//        reverseDecryptionButton = (Button) findViewById(R.id.notes_list_activity_reverse_decrypt_btn);
-
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
 
         /*
@@ -251,19 +100,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             ActivityCompat.requestPermissions(NotesListActivity.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
-//        setSupportActionBar(toolbar);
-
         encryptButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View v) {
-
-//                if (notesAreEncrypted()){
-//                    (encryptionPassDialog = createEncryptPassDialog("Decrypt")).show();
-//                } else {
-//                    (encryptionPassDialog = createEncryptPassDialog("Encrypt")).show();
-//                }
-
                 startActivityAccordingToDecryptionState();
             }
         });
@@ -275,13 +115,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
                 if (EncryptManager.notesAreEncrypted(getApplicationContext())){
                     //show cloud icon
-                    if (mAuth == null || mAuth.getCurrentUser() == null) {
-                        CloudOptionsBottomSheet btmSheet = new CloudOptionsBottomSheet(NotesListActivity.this);
-                        btmSheet.setBottomSheetCallback(NotesListActivity.this);
-                        btmSheet.show();
+                    if (!CloudManager.isLoggedIn()) {
+                        Intent loginIntent = new Intent(getApplicationContext(), LoginActivity.class);
+                        startActivity(loginIntent);
                     }else{
-                        deleteNotesToBeDeletedFromCloud();
-                        updateCloudNotes();
+                        CloudManager.deleteNotesToBeDeletedFromCloud(getApplicationContext());
+                        CloudManager.updateCloudNotes(getApplicationContext());
                     }
 
                 } else if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
@@ -334,7 +173,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
                                     whereClause,
                                     whereArgs);
-                            deleteNoteFromCloud(note);
+                            CloudManager.deleteNoteFromCloud(getApplicationContext(), note);
                         }
                         actionMode.finish();
                         return true;
@@ -361,8 +200,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                 }
             }
         };
-
-        mAuth = FirebaseAuth.getInstance();
 
         /*
          * Restore the state
@@ -391,49 +228,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             notesAdapter.notifyDataSetChanged();
         }
 
-        databaseValueListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "Error : " + databaseError.getMessage());
-            }
-        };
-
-        deleteNotesToBeDeletedFromCloud();
-
-        databaseContentObserver = new ContentObserver(new Handler()) {
-            @Override
-            public boolean deliverSelfNotifications() {
-                return super.deliverSelfNotifications();
-            }
-
-            @Override
-            public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-            }
-
-            @Override
-            public void onChange(boolean selfChange, Uri uri) {
-                notesAdapter.resetCursor();
-                notesAdapter.notifyDataSetChanged();
-                updateUIAccordingToEncryptionStatus();
-            }
-        };
-
+        CloudManager.deleteNotesToBeDeletedFromCloud(getApplicationContext());
         updateUIAccordingToEncryptionStatus();
-        //TOOD Remove this
-        downloadNotesFromCloud();
-    }
 
-    private boolean isLoggedIn(){
-        if (mAuth != null && mAuth.getCurrentUser() != null){
-            return true;
-        }
-        return false;
+        FirebaseAuth.getInstance().signOut();
     }
 
     private AlertDialog createReverseDecryptionDialog() {
@@ -487,50 +285,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
-    private Note convertToNote(Cursor c){
-        if (c == null){
-            return null;
-        }
-        Note n = null;
-
-        String text = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TEXT));
-        long timestamp = Long.parseLong(c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP)));
-        String id = c.getString(c.getColumnIndex(NotesDatabase.DatabaseContract._ID));
-        n = new Note(id, text, timestamp);
-
-        return n;
-    }
-
-
-    private void deleteNotesToBeDeletedFromCloud() {
-
-        if (mAuth.getCurrentUser() != null){
-            Log.d(TAG, "Deleting pending notes from the cloud");
-            Cursor c = getContentResolver().query(NotesDatabase.DeleteNotesContract.URI,
-                    NotesDatabase.DeleteNotesContract.getTableColumns(),
-                    null,
-                    null,
-                    null);
-
-            if (c != null && c.getCount() > 0){
-                do {
-                    c.moveToNext();
-                    Note currNote = convertToNote(c);
-                    deleteNoteFromCloud(currNote);
-
-                    /**
-                     * Delete the note from To be deleted from cloud Table in the db
-                     */
-                    String whereClause = NotesDatabase.DeleteNotesContract._ID + " = ? ";
-                    String selectionArgs[] = {currNote.id.toString()};
-                    getContentResolver().delete(NotesDatabase.DeleteNotesContract.URI,
-                            whereClause,
-                            selectionArgs);
-                }while (!c.isLast());
-            }
-        }
-    }
-
     /*
      * Execution comes here when the app is already starremoveted and the activity
      * already exists, but needs to go into foreground because it was coverd
@@ -544,17 +298,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         notesAdapter.resetCursor();
         notesAdapter.notifyDataSetChanged();
         updateUIAccordingToEncryptionStatus();
-    }
-
-    //TODO Remove
-    void addData(){
-        for (int i = 0; i < 30; ++i) {
-            ContentValues vals = new ContentValues();
-            vals.put(NotesDatabase.DatabaseContract._ID, UUID.randomUUID().toString());
-            vals.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, System.currentTimeMillis());
-            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, "Note " + i);
-            getContentResolver().insert(NotesDatabase.DatabaseContract.URI, vals);
-        }
     }
 
     @Override
@@ -625,7 +368,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private void updateUIAccordingToEncryptionStatus(){
 
         if (EncryptManager.notesAreEncrypted(getApplicationContext())){
-            if (!isLoggedIn()){
+            if (!CloudManager.isLoggedIn()){
                 actionButton.setAlpha(0.6f);
             }else{
                 actionButton.setAlpha(1.0f);
@@ -666,19 +409,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
     }
 
-//    private void updateEncryptionStatus(){
-//        if (notesAdapter != null && notesAdapter.hasNotes()){
-//            //do nothing
-//        } else {
-//            if (notesAdapter != null && !notesAdapter.hasNotes()){
-//                setEncrypted(false);
-//                clearCachedPassword();
-//            }
-//        }
-//    }
-
-
-
     @Override
     public void addNoteForDeletion(Note note) {
         if (notesToDelete == null){
@@ -712,419 +442,5 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         String notesToDeleteJson = gson.toJson(notesToDelete);
         outState.putString("notesToDelete", notesToDeleteJson);
         outState.putBoolean("actionMode", actionMode != null);
-    }
-
-    public void saveNotesToCloud(DatabaseReference db){
-
-        if (mAuth != null && mAuth.getCurrentUser() != null) {
-            Cursor c = getContentResolver().query(NotesDatabase.DatabaseContract.URI,
-                    NotesDatabase.DatabaseContract.getTableColumns(),
-                    null,
-                    null,
-                    null);
-
-            if (c != null && c.getCount() > 0) {
-                do {
-
-                    c.moveToNext();
-                    Note currNote = convertToNote(c);
-                    saveSingleNoteToCloud(currNote);
-
-                } while (!c.isLast());
-                Log.d(TAG, "Uploaded notes");
-            } else {
-                Toast.makeText(getApplicationContext(), "No notes to save ", Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(getApplicationContext(), "Please Register/Login first", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void saveSingleNoteToCloud(Note currNote) {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        DatabaseReference userDb = db.getReference();
-        String remoteNotesFolderName = getRemoteNotesFolder();
-        DatabaseReference ref = userDb.child(remoteNotesFolderName).child(currNote.id.toString());
-        ref.setValue(currNote);
-    }
-
-    public void deleteNoteFromCloud(Note note){
-
-        if (mAuth != null && mAuth.getCurrentUser() != null) {
-            FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
-            DatabaseReference db = firebaseDb.getReference();
-            db.addValueEventListener(databaseValueListener);
-
-            String childName = mAuth.getCurrentUser().getUid();
-            DatabaseReference userRef = db.child(childName);
-            userRef.child(note.id.toString()).removeValue();
-        }else{
-            /*
-             * Save the note to be deleted later
-             */
-            storeNoteForLaterDelete(note);
-        }
-    }
-
-    public void storeNoteForLaterDelete(Note note){
-        ContentValues vals = new ContentValues();
-        vals.put(NotesDatabase.DeleteNotesContract._ID, note.id.toString());
-        vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TEXT, note.getText());
-        vals.put(NotesDatabase.DeleteNotesContract.COLUMN_TIMESTAMP, note.getTimestamp());
-        Uri uri = getContentResolver().insert(NotesDatabase.DeleteNotesContract.URI, vals);
-    }
-
-    @Override
-    public void onLoginSelected(String email, String password) {
-        Log.d(TAG, "Login selected");
-
-        if (credentialsDialog != null){
-            credentialsDialog.dismiss();
-        }else{
-            Log.e(TAG, "Alert dialog should be visible");
-        }
-
-        if (mAuth != null){
-            try {
-
-                mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        try {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "Logged in as " + mAuth.getCurrentUser().getEmail());
-                                Toast.makeText(getApplicationContext(), "Logged in as " +
-                                mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
-                                downloadNotesFromCloud();
-                                deleteNotesToBeDeletedFromCloud();
-                                updateCloudNotes();
-                                updateUIAccordingToEncryptionStatus();
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Cannot login" + task.getException().getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                                Log.d(TAG, task.getException().toString());
-                                Log.d(TAG, task.getResult().toString());
-                                updateUIAccordingToEncryptionStatus();
-                            }
-                        }catch (Exception e){
-                            if (e instanceof FirebaseAuthInvalidCredentialsException){
-                                Toast.makeText(getApplicationContext(), "Invalid password", Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "Login failed " + e.getMessage());
-                    }
-                });
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     *  TO download notes from cloud
-     *  the app first sends a dummy note and then
-     *  deletes the dummy note to record changes to
-     *  the remote real time db so that the valueChangeListener fires
-     */
-    private void downloadNotesFromCloud() {
-
-        if (mAuth != null && mAuth.getCurrentUser() != null){
-            //send dummy note
-            FirebaseDatabase db = FirebaseDatabase.getInstance();
-            DatabaseReference dbRef = db.getReference();
-            DatabaseReference childRef = dbRef.child(getRemoteNotesFolder());
-            childRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Iterable<DataSnapshot> data = dataSnapshot.getChildren();
-                    Iterator<DataSnapshot> dataIterator = data.iterator();
-                    while (dataIterator.hasNext()){
-                        Note currNote = dataIterator.next().getValue(Note.class);
-                        saveNoteLocally(currNote);
-
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-            sendDummyNote();
-        }
-
-    }
-
-    private void sendDummyNote() {
-
-        Note dummyNote = new Note(UUID.randomUUID().toString(), "Dummy", -1);
-        saveSingleNoteToCloud(dummyNote);
-        deleteNoteFromCloud(dummyNote);
-    }
-
-    private void saveNoteLocally(Note note) {
-
-        ContentResolver contentResolver = getContentResolver();
-        ContentValues vals = new ContentValues();
-        vals.put(NotesDatabase.DatabaseContract._ID, note.id.toString());
-        vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT, note.text);
-        vals.put(NotesDatabase.DatabaseContract.COLUMN_TIMESTAMP, note.timestamp);
-        contentResolver.insert(NotesDatabase.DatabaseContract.URI, vals);
-    }
-
-    private void updateCloudNotes() {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        DatabaseReference notesDb = db.getReference();
-        saveNotesToCloud(notesDb);
-    }
-
-    @Override
-    public void onRegisterSelected(String email, String password) {
-        Log.d(TAG, "Register selected");
-
-        startActivityAccordingToDecryptionState();
-
-        if (credentialsDialog != null){
-            credentialsDialog.dismiss();
-        }else{
-            Log.e(TAG, "Alert dialog should be visible");
-        }
-
-
-        if (mAuth != null){
-            try {
-
-                mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        try {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "Registered in as " + mAuth.getCurrentUser().getEmail());
-                            } else {
-                                Log.d(TAG, "Registration failure " + task.getException().toString());
-                                Log.d(TAG, "Registration failure " + task.getResult().toString());
-                            }
-                        }catch (Exception e){
-                            if (e instanceof FirebaseAuthWeakPasswordException){
-                                Toast.makeText(getApplicationContext(), "Password too weak", Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "Register failed " + e.getMessage());
-                    }
-                });
-
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void onOneOfTheOptionsSelected(String optionText) {
-        credentialsDialog = createCredentialsDialog(optionText);
-        credentialsDialog.show();
-    }
-
-    private AlertDialog createCredentialsDialog(final String buttonText){
-
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
-        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-        View rootView = inflater.inflate(R.layout.cloud_credentials_bottom_sheet, null, false);
-        alertBuilder.setView(rootView);
-        final EditText usernameText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_username);
-        final EditText passwordText = (EditText) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
-        Button actionButton = (Button) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_btn);
-
-
-        actionButton.setText(buttonText);
-        actionButton.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                if (buttonText.toLowerCase().equals("login")) {
-                    if (((BottomSheetCallback)NotesListActivity.this) != null) {
-                        ((BottomSheetCallback)NotesListActivity.this).onLoginSelected(usernameText.getText().toString(), passwordText.getText().toString());
-                    }
-                } else if (buttonText.toLowerCase().equals("register")){
-                    if (((BottomSheetCallback)NotesListActivity.this) != null) {
-                        ((BottomSheetCallback)NotesListActivity.this).onRegisterSelected(usernameText.getText().toString(), passwordText.getText().toString());
-                    }
-                }
-            }
-        });
-
-        return alertBuilder.create();
-    }
-
-    public void testEncDec(String data, String password){
-
-        KeyGenerator keyGenerator = null;
-        AlgorithmParameterSpec specs;
-        SecretKey key;
-        Cipher cipher;
-        ByteArrayOutputStream bos;
-        ByteArrayInputStream bis;;
-        int chunkSize;
-        int bisAvaialable;
-        byte[] result;
-        byte[] part;
-        byte[] partialSolution;
-        byte[] partResult;
-        try {
-            keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-            specs = new KeyGenParameterSpec.Builder(
-                    "key",
-                    KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                    .setRandomizedEncryptionRequired(false)
-                    .build();
-            keyGenerator.init(specs);
-            key = keyGenerator.generateKey();
-            cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
-
-//            byte[] message1 = new String(
-//                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1" +
-//                    "Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1Message1").getBytes("UTF-8");
-
-//            byte[] chunk = new String(
-//                    "Message1Message1Messsage1Message1Message1Message1Messsage1Message1").getBytes("UTF-8");
-
-//            StringBuilder builder = new StringBuilder();
-//            for (int i = 0; i < 10; ++i){
-//                builder.append(new String(chunk));
-//            }
-
-//            byte[] message1 = builder.toString().getBytes("UTF-8");
-            chunkSize = 1024;
-//            bos.write(message1);
-//            result = bos.toByteArray();
-
-            //encrypt
-            bis = new ByteArrayInputStream(data.getBytes("UTF-8"));
-            bos = new ByteArrayOutputStream();
-            bisAvaialable = bis.available();
-            part = new byte[bisAvaialable];
-            partResult = new byte[bisAvaialable];
-            while (bisAvaialable > 2 * chunkSize){
-                part = new byte[chunkSize];
-                bis.read(part, 0, chunkSize);
-                partResult = cipher.update(part);
-                bos.write(partResult);
-                bisAvaialable = bis.available();
-            }
-            part = new byte[bisAvaialable];
-            bis.read(part, 0, bisAvaialable);
-            partResult = cipher.doFinal(part);
-            bos.write(partResult);
-            result = bos.toByteArray();
-            Log.d(TAG, "Encrypted text = " + new String(result));
-
-//            byte[] crypt1 = cipher.update(message1);
-//            byte[] crypt2 = cipher.update(message2.getBytes("UTF-8"));
-//            byte[] crypt3 = cipher.doFinal(message3.getBytes("UTF-8"));
-
-            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(password.getBytes("UTF-8")));
-
-            String base64Data = Base64.encodeToString(bos.toByteArray(), 0);
-            //decrypt
-            bis = new ByteArrayInputStream(Base64.decode(base64Data.getBytes(), 0));
-            bos = new ByteArrayOutputStream();
-            bisAvaialable = bis.available();
-            part = new byte[bisAvaialable];
-            partResult = new byte[bisAvaialable];
-            chunkSize = 1024;
-            while (bisAvaialable > chunkSize){
-                part = new byte[chunkSize];
-                bis.read(part, 0, chunkSize);
-                partResult = cipher.update(part);
-                bos.write(partResult);
-                bisAvaialable = bis.available();
-            }
-            part = new byte[bisAvaialable];
-            bis.read(part, 0,  bisAvaialable);
-            partResult = cipher.doFinal(part);
-            bos.write(partResult);
-            result = bos.toByteArray();
-
-//            result = decrypt(result, password, key);
-            String finalResult = new String(result);
-            Log.d(TAG, "Final result = " + finalResult);
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private AlertDialog createEncryptPassDialog(final String buttonText){
-
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(NotesListActivity.this);
-        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-        View rootView = inflater.inflate(R.layout.encrypt_passord_layout, null, false);
-        alertBuilder.setView(rootView);
-        final EditText passwordText = (EditText) rootView.findViewById(R.id.encrypt_layout_password);
-        Button actionButton = (Button) rootView.findViewById(R.id.encrypt_layout_btn);
-
-        actionButton.setText(buttonText);
-        actionButton.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                if (buttonText.toLowerCase().equals("encrypt")) {
-                    if (((EncryptLayoutCallback)NotesListActivity.this) != null) {
-                        ((EncryptLayoutCallback)NotesListActivity.this).onEncryptSelected(passwordText.getText().toString());
-                    }
-                } else if (buttonText.toLowerCase().equals("decrypt")){
-                    if (((EncryptLayoutCallback)NotesListActivity.this) != null) {
-                        ((EncryptLayoutCallback)NotesListActivity.this).onDecryptSelected(passwordText.getText().toString());
-                    }
-                }
-            }
-        });
-
-        return alertBuilder.create();
-    }
-
-    @Override
-    public void onEncryptSelected(String password) {
-
-    }
-
-    @Override
-    public void onDecryptSelected(String password) {
-
-    }
-
-    public String getRemoteNotesFolder() {
-        if (mAuth != null && mAuth.getCurrentUser() != null){
-            String childName = mAuth.getCurrentUser().getUid();
-            return childName;
-        }
-        return null;
     }
 }
