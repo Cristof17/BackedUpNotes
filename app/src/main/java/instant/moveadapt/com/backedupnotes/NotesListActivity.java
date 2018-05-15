@@ -46,13 +46,16 @@ import instant.moveadapt.com.backedupnotes.Cloud.NoteUploadedCallback;
 import instant.moveadapt.com.backedupnotes.Cloud.StartUploadCallback;
 import instant.moveadapt.com.backedupnotes.Database.DatabaseManager;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.Encrypt.CryptStartCallback;
+import instant.moveadapt.com.backedupnotes.Encrypt.CryptUpdateCallback;
 import instant.moveadapt.com.backedupnotes.Encrypt.EncryptManager;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
+import instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager;
 import instant.moveadapt.com.backedupnotes.RecyclerView.NoteListRecyclerViewAdapter;
 import instant.moveadapt.com.backedupnotes.RecyclerView.SelectedRecyclerViewItemCallback;
 
 public class NotesListActivity extends AppCompatActivity implements SelectedRecyclerViewItemCallback,
-        StartUploadCallback, NoteUploadedCallback{
+        StartUploadCallback, NoteUploadedCallback, CryptStartCallback, CryptUpdateCallback{
 
     /*
      * Permission requests code
@@ -67,7 +70,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private LinearLayout popUpLinearLayout;
     private ProgressBar popUpProgressBar;
 
-    private FloatingActionButton encryptButton;
+    private FloatingActionButton exitButton;
     private FloatingActionButton actionButton;
 
     /*
@@ -93,6 +96,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     public ActionMode actionMode;
     public ActionMode.Callback actionModeCallback;
     private CoordinatorLayout rootLayout;
+    private int countNotes;
+    private int maxNotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +108,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        encryptButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_encrypt_note_btn);
+        exitButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_exit_btn);
         rootLayout = (CoordinatorLayout)findViewById(R.id.notes_list_coordinator_layout);
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
         popUpLinearLayout = (LinearLayout)findViewById(R.id.activity_notes_list_popup_ll);
@@ -125,11 +130,13 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             ActivityCompat.requestPermissions(NotesListActivity.this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_WRITE_PERMISSION_REQ_CODE);
         }
 
-        encryptButton.setOnClickListener(new View.OnClickListener(){
+        exitButton.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View v) {
-                startActivityAccordingToDecryptionState();
+                Intent intent = new Intent(getApplicationContext(), Crypt.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
             }
         });
 
@@ -222,7 +229,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             getApplicationContext(),
                             false);
                     updateUIAccordingToEncryptionStatus();
-                    encryptButton.setEnabled(false);
+                    exitButton.setEnabled(false);
                 }
             }
         };
@@ -290,12 +297,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     }
 
     private void looksGoodSelected() {
-        clearCachedPassword();
-    }
-
-    private void clearCachedPassword(){
-        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(
-                getApplicationContext(), null);
+        PreferenceManager.clearCachedPassword(getApplicationContext());
     }
 
     private String getCachedPassword(){
@@ -306,9 +308,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     private void reverseDecryption() {
         SecretKey key = EncryptManager.getKey(getApplicationContext());
-        EncryptManager.encryptAllNotes(getApplicationContext(), getCachedPassword(), key);
+        EncryptManager.encryptAllNotes(getApplicationContext(), getCachedPassword(), key, null, null);
         EncryptManager.setEncrypted(getApplicationContext(), true);
-        clearCachedPassword();
+        PreferenceManager.clearCachedPassword(getApplicationContext());
         if (notesAdapter != null){
             notesAdapter.resetCursor();
             notesAdapter.notifyDataSetChanged();
@@ -398,45 +400,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     private void updateUIAccordingToEncryptionStatus(){
 
-        if (EncryptManager.notesAreEncrypted(getApplicationContext())){
-            if (!CloudManager.isLoggedIn()){
-                actionButton.setAlpha(0.6f);
-            }else{
-                actionButton.setAlpha(1.0f);
-            }
-            encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
-            encryptButton.setImageResource(R.drawable.ic_lock_outline_white);
-            actionButton.setImageResource(R.drawable.ic_cloud_upload_white);
+        if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())) {
+            actionButton.setImageResource(R.drawable.ic_add_white);
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
-        }else{
-            if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())) {
-                actionButton.setImageResource(R.drawable.ic_add_white);
-                actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
-                actionButton.setAlpha(1.0f);
-                encryptButton.setImageResource(R.drawable.ic_lock_open_white);
-                encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
-            }else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
-                actionButton.setImageResource(R.drawable.ic_check_white);
-                actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
-                actionButton.setAlpha(1.0f);
-                encryptButton.setImageResource(R.drawable.ic_lock_open_white);
-                encryptButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
-            }
-        }
-    }
-
-    private void startActivityAccordingToDecryptionState(){
-        if (EncryptManager.notesAreEncrypted(getApplicationContext())){
-            Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
-            startActivity(cryptIntent);
-        }else {
-            if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())) {
-                Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
-                startActivity(cryptIntent);
-            } else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())) {
-                Intent cryptIntent = new Intent(getApplicationContext(), Crypt.class);
-                startActivity(cryptIntent);
-            }
+            actionButton.setAlpha(1.0f);
+            exitButton.setImageResource(R.drawable.ic_baseline_exit_to_app);
+            exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+        }else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
+            actionButton.setImageResource(R.drawable.ic_check_white);
+            actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
+            actionButton.setAlpha(1.0f);
+            exitButton.setImageResource(R.drawable.ic_baseline_exit_to_app);
+            exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
         }
     }
 
@@ -479,9 +454,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     protected void onResume() {
         super.onResume();
         if(DatabaseManager.getNotesCount(getApplicationContext()) == 0){
-            encryptButton.setEnabled(false);
+            exitButton.setEnabled(false);
         } else {
-            encryptButton.setEnabled(true);
+            exitButton.setEnabled(true);
         }
     }
 
@@ -533,5 +508,29 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         recyclerViewAnimtor.start();
         popUpAnimator.start();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (DatabaseManager.getNotesCount(getApplicationContext()) != 0) {
+            Intent intent = new Intent(getApplicationContext(), Crypt.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        }
+        super.onBackPressed();
+    }
+
+    @Override
+    public void cryptographyOperationStarted(boolean isEncryption) {
+        maxNotes = DatabaseManager.getNotesCount(getApplicationContext());
+        countNotes = 0;
+    }
+
+    @Override
+    public void cryptUpdate(boolean isEncryption) {
+        countNotes ++;
+        if (countNotes == maxNotes){
+            finish();
+        }
     }
 }

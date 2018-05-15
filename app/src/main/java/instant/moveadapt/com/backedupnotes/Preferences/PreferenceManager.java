@@ -48,4 +48,9 @@ public class PreferenceManager {
         SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(ENCRYPTION_LOOKS_GOOD_PASSWORD, null);
     }
+
+    public static void clearCachedPassword(Context context){
+        instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.setLooksGoodPassword(
+                context, null);
+    }
 }

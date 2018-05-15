@@ -5,10 +5,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Handler;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.TabHost;
 import android.widget.Toast;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
@@ -139,9 +142,29 @@ public class EncryptManager {
         }
     }
 
-    public static void encryptAllNotes(Context context, String password, SecretKey key){
+    public static void encryptAllNotes(Context context, String password, SecretKey key, CryptStartCallback
+                                       startCallback,final CryptUpdateCallback updateCallback){
+
+        ContentObserver observer = null;
 
         setEncrypted(context, true);
+        if (startCallback != null)
+            startCallback.cryptographyOperationStarted(true);
+        if (updateCallback != null) {
+            observer = new ContentObserver(new Handler()) {
+                @Override
+                public void onChange(boolean selfChange, Uri uri) {
+                    super.onChange(selfChange, uri);
+                    if (uri.equals(NotesDatabase.DatabaseContract.URI)) {
+                        updateCallback.cryptUpdate(true);
+                    }
+                }
+            };
+            context.getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI,
+                    false,
+                    observer);
+        }
+
         Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
                 null,
@@ -155,11 +178,32 @@ public class EncryptManager {
                 encryptSingleNote(context, note, password, key);
             } while (! c.isLast());
         }
+        if (updateCallback != null)
+            context.getContentResolver().unregisterContentObserver(observer);
     }
 
-    public static void decryptAllNotes(Context context, String password, SecretKey key){
+    public static void decryptAllNotes(Context context, String password, SecretKey key,
+                                       CryptStartCallback startCallback, final CryptUpdateCallback updateCallback){
+
+        ContentObserver observer = null;
 
         setEncrypted(context, false);
+        if (startCallback != null)
+            startCallback.cryptographyOperationStarted(false);
+        if (updateCallback != null) {
+            observer = new ContentObserver(new Handler()) {
+                @Override
+                public void onChange(boolean selfChange, Uri uri) {
+                    super.onChange(selfChange, uri);
+                    if (uri.equals(NotesDatabase.DatabaseContract.URI)) {
+                        updateCallback.cryptUpdate(false);
+                    }
+                }
+            };
+            context.getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI,
+                    false, observer);
+        }
+
         Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,
                 NotesDatabase.DatabaseContract.getTableColumns(),
                 null,
@@ -173,15 +217,19 @@ public class EncryptManager {
                 decryptSingleNote(context, note, password, key);
             } while (!c.isLast());
         }
+
+        if (updateCallback != null)
+            context.getContentResolver().unregisterContentObserver(observer);
     }
 
     private static void decryptSingleNote(Context context, Note note, String password, SecretKey key){
         try {
+
             ContentValues vals = new ContentValues();
             String decryptedText = decrypt(note.text, password, key);
             if (decryptedText == null) {
-                Toast.makeText(context, "Error when decrypting " +
-                        note.text, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error when decrypting " +
+                        note.text);
                 return;
             }
             vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
@@ -189,7 +237,6 @@ public class EncryptManager {
             ContentResolver resolver = context.getContentResolver();
             String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
             String[] whereArgs = new String[] {note.id.toString()};
-
             resolver.update(NotesDatabase.DatabaseContract.URI,
                     vals,
                     whereClause,

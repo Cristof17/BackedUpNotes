@@ -1,9 +1,12 @@
 package instant.moveadapt.com.backedupnotes;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,7 +17,11 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
+import instant.moveadapt.com.backedupnotes.Database.DatabaseManager;
 import instant.moveadapt.com.backedupnotes.Database.NotesDatabase;
+import instant.moveadapt.com.backedupnotes.Encrypt.CryptStartCallback;
+import instant.moveadapt.com.backedupnotes.Encrypt.CryptUpdateCallback;
 import instant.moveadapt.com.backedupnotes.Encrypt.EncryptManager;
 import instant.moveadapt.com.backedupnotes.Pojo.Note;
 import instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager;
@@ -25,7 +32,8 @@ import javax.crypto.SecretKey;
  * Created by cristof on 11.05.2018.
  */
 
-public class Crypt extends AppCompatActivity implements View.OnClickListener{
+public class Crypt extends AppCompatActivity implements View.OnClickListener, CryptStartCallback,
+        CryptUpdateCallback{
 
     private Button btn0;
     private Button btn1;
@@ -41,6 +49,9 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener{
     private Button doneBtn;
     private TextView text;
     private Toolbar toolbar;
+    private static final String TAG = "CRYPT";
+    private int countNotes;
+    private int maxNotes;
 
 
     @Override
@@ -83,9 +94,15 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener{
 
         if (getSupportActionBar() != null){
             getSupportActionBar().setTitle("");
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
-            getSupportActionBar().setHomeButtonEnabled(true);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        CloudManager.downloadNotesFromCloud(getApplicationContext());
+
+        int notesCount = DatabaseManager.getNotesCount(getApplicationContext());
+        if (notesCount == 0){
+            Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
+            moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(moveOnIntent);
         }
     }
 
@@ -133,13 +150,13 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener{
             if (notesAreEncrypted()){
                 cachePassword(text.getText().toString());
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
-                EncryptManager.decryptAllNotes(getApplicationContext(), text.getText().toString(), key);
-                finish();
+                EncryptManager.decryptAllNotes(getApplicationContext(), text.getText().toString(), key,
+                        this, this);
             } else {
                 EncryptManager.generateKey(getApplicationContext());
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
-                EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key);
-                finish();
+                EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key,
+                        this, this);
             }
 
         } else if (v == delBtn){
@@ -159,9 +176,20 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener{
                 password);
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+
     /*
      * See if the notes are encrypted
      */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("TEXT", text.getText().toString());
+    }
+
     private boolean notesAreEncrypted(){
         boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.
                 areEncrypted(getApplicationContext());
@@ -169,8 +197,27 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener{
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putString("TEXT", text.getText().toString());
+    public void cryptographyOperationStarted(boolean isEncryption) {
+        Log.d(TAG, (isEncryption) ? "encryption" : "decryption");
+        countNotes = 0;
+        maxNotes = DatabaseManager.getNotesCount(getApplicationContext());
     }
+
+    @Override
+    public void cryptUpdate(boolean isEncryption) {
+        Log.d(TAG, (isEncryption) ? "encryption" : "decryption");
+        countNotes++;
+        if (countNotes == maxNotes) {
+            if (isEncryption) {
+                //clear the top
+                finish();
+            } else {
+                Intent intent = new Intent(getApplicationContext(), NotesListActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        }
+    }
+
+
 }

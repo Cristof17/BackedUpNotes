@@ -48,7 +48,7 @@
             android:layout_width="65dp"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:id="@+id/notes_list_activity_encrypt_note_btn"
+            android:id="@+id/notes_list_activity_exit_btn"
             android:layout_above="@id/notes_list_activity_action_btn"
             android:layout_marginBottom="5dp"
             android:layout_marginRight="20dp"/>

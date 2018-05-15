@@ -15,21 +15,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".NotesListActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity android:name=".NewNoteActivity"
             android:parentActivityName=".NotesListActivity" />
 
         <activity android:name=".EditNoteActivity"
-            android:parentActivityName=".NotesListActivity"/>
+            android:parentActivityName=".NotesListActivity" />
 
-        <activity android:name=".Crypt"
-            android:parentActivityName=".NotesListActivity"/>
+        <activity android:name=".Crypt">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".LoginActivity"
             android:parentActivityName=".NotesListActivity"/>
