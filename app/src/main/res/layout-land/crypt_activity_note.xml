@@ -6,7 +6,17 @@
     <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="@dimen/toolbar_diment"
-        android:id="@+id/crypt_activity_note_layout_toolbar"/>
+        android:id="@+id/crypt_activity_note_layout_toolbar"
+        android:layout_marginTop="5dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:fontFamily="monospace"
+            android:textSize="20sp"
+            android:id="@+id/crypt_activity_note_title"/>
+    </android.support.v7.widget.Toolbar>
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -27,11 +37,10 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:layout_alignParentBottom="true"
-        android:background="#FF0000"
-        android:layout_marginTop="100dp">
+        android:layout_marginTop="80dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:gravity="center"
@@ -43,100 +52,138 @@
                 android:orientation="horizontal"
                 android:layout_weight="1">
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
                     android:id="@+id/crypt_activity_note_btn_1"
                     android:text="1"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
                     android:text="2"
                     android:id="@+id/crypt_activity_note_btn_2"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
                     android:text="3"
                     android:id="@+id/crypt_activity_note_btn_3"/>
-            </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_weight="1">
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="4"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="4"
                     android:id="@+id/crypt_activity_note_btn_4"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="5"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="5"
                     android:id="@+id/crypt_activity_note_btn_5"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
+                    android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
                     android:text="6"
-                    android:layout_weight="1"
                     android:id="@+id/crypt_activity_note_btn_6"/>
-            </LinearLayout>
 
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_weight="1">
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="7"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="7"
                     android:id="@+id/crypt_activity_note_btn_7"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="8"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="8"
                     android:id="@+id/crypt_activity_note_btn_8"/>
                 <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="9"
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="9"
                     android:id="@+id/crypt_activity_note_btn_9"/>
+
+                <Button
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
+                    android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="0"
+                    android:id="@+id/crypt_activity_note_btn_0"/>
+
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_weight="1">
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Del"
+                <ImageButton
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
+                    android:text="Del"
+                    android:src="@drawable/ic_baseline_backspace"
                     android:id="@+id/crypt_activity_note_btn_del"/>
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
+                <ImageButton
+                    android:layout_width="@dimen/btn_width"
+                    android:layout_height="@dimen/btn_width"
                     android:layout_weight="1"
-                    android:id="@+id/crypt_activity_note_btn_0"/>
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:background="@drawable/number_selector"
+                    android:alpha="0.6"
+                    android:fontFamily="monospace"
+                    android:textSize="30sp"
                     android:text="Done"
-                    android:layout_weight="1"
+                    android:src="@drawable/ic_tick_inside_circle"
                     android:id="@+id/crypt_activity_note_btn_done"/>
             </LinearLayout>
 

@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,13 +46,14 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
     private Button btn7;
     private Button btn8;
     private Button btn9;
-    private Button delBtn;
-    private Button doneBtn;
+    private ImageButton delBtn;
+    private ImageButton doneBtn;
     private TextView text;
     private Toolbar toolbar;
     private static final String TAG = "CRYPT";
     private int countNotes;
     private int maxNotes;
+    private TextView title;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,10 +72,11 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         btn8 = (Button)findViewById(R.id.crypt_activity_note_btn_8);
         btn9 = (Button)findViewById(R.id.crypt_activity_note_btn_9);
         btn0 = (Button)findViewById(R.id.crypt_activity_note_btn_0);
-        doneBtn = (Button)findViewById(R.id.crypt_activity_note_btn_done);
-        delBtn = (Button)findViewById(R.id.crypt_activity_note_btn_del);
+        doneBtn = (ImageButton)findViewById(R.id.crypt_activity_note_btn_done);
+        delBtn = (ImageButton)findViewById(R.id.crypt_activity_note_btn_del);
         text = (TextView)findViewById(R.id.crypt_activity_tv_number);
         toolbar = (Toolbar)findViewById(R.id.crypt_activity_note_layout_toolbar);
+        title = (TextView)findViewById(R.id.crypt_activity_note_title);
         setSupportActionBar(toolbar);
 
         btn1.setOnClickListener(this);
@@ -127,6 +130,12 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
                 moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(moveOnIntent);
                 PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), false);
+        }
+
+        if (PreferenceManager.areEncrypted(getApplicationContext())){
+            title.setText("enter password".toLowerCase());
+        } else {
+            title.setText("set password".toLowerCase());
         }
     }
 
@@ -252,6 +261,4 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
             }
         }
     }
-
-
 }
