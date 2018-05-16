@@ -53,10 +53,12 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
     private int countNotes;
     private int maxNotes;
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent startIntent = null;
+
         setContentView(R.layout.crypt_activity_note);
         btn1 = (Button)findViewById(R.id.crypt_activity_note_btn_1);
         btn2 = (Button)findViewById(R.id.crypt_activity_note_btn_2);
@@ -99,10 +101,32 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         CloudManager.downloadNotesFromCloud(getApplicationContext());
 
         int notesCount = DatabaseManager.getNotesCount(getApplicationContext());
-        if (notesCount == 0){
+        boolean notesAreDecrypted = PreferenceManager.areEncrypted(getApplicationContext());
+
+        if (notesCount == 0) {
+            finish();
             Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
             moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(moveOnIntent);
+        }
+
+        if (startIntent != null){
+            boolean cameFromNotesListActivity = startIntent.getBooleanExtra("CAME_FROM_NOTES_LIST", false);
+            if (!cameFromNotesListActivity){
+                //move on to the next activity
+                if (notesAreDecrypted){
+                    Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
+                    moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(moveOnIntent);
+                }
+            }
+        }
+
+        if (PreferenceManager.exitWithoutEncrypt(getApplicationContext())){
+                Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
+                moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(moveOnIntent);
+                PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), false);
         }
     }
 
@@ -179,6 +203,10 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        if (text.getText().toString() == null ||
+                text.getText().toString().equals("")){
+            PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
+        }
     }
 
     /*
@@ -209,7 +237,10 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         countNotes++;
         if (countNotes == maxNotes) {
             if (isEncryption) {
-                //clear the top
+                /**
+                 * No need to clear the history because the history has been
+                 * cleared when starting this activity
+                 */
                 finish();
             } else {
                 Intent intent = new Intent(getApplicationContext(), NotesListActivity.class);

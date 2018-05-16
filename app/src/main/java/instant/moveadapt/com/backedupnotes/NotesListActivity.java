@@ -136,6 +136,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), Crypt.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.putExtra("CAME_FROM_NOTES_LIST", true);
                 startActivity(intent);
             }
         });
@@ -515,6 +516,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         if (DatabaseManager.getNotesCount(getApplicationContext()) != 0) {
             Intent intent = new Intent(getApplicationContext(), Crypt.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra("CAME_FROM_NOTES_LIST", true);
             startActivity(intent);
         }
         super.onBackPressed();
