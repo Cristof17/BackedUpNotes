@@ -12,6 +12,6 @@
         android:textSize="16sp"
         android:layout_margin="15dp"
         android:id="@+id/reverse_decryption_layout_explanation_tv"
-        android:text="If the data does not look ok after decryption don't panic ! You can reverse the process and try again with another password"/>
+        android:text="If the notes don't look like before, you can reverse the decryption and try again with another password"/>
 
 </LinearLayout>

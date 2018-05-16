@@ -279,15 +279,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         View rootView = inflater.inflate(R.layout.reverse_decryption_alert_dialog_layout, null, false);
         alertBuilder.setView(rootView);
-        final TextView warningTextView = (TextView) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
-        alertBuilder.setPositiveButton("Looks good", new DialogInterface.OnClickListener() {
+        alertBuilder.setTitle("Do notes look like before?");
+//        final TextView warningTextView = (TextView) rootView.findViewById(R.id.cloud_credentials_bottom_sheet_password);
+        alertBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 looksGoodSelected();
                 updateUIAccordingToEncryptionStatus();
             }
         });
-        alertBuilder.setNegativeButton("Reverse", new DialogInterface.OnClickListener() {
+        alertBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 reverseDecryption();
@@ -312,11 +313,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         EncryptManager.encryptAllNotes(getApplicationContext(), getCachedPassword(), key, null, null);
         EncryptManager.setEncrypted(getApplicationContext(), true);
         PreferenceManager.clearCachedPassword(getApplicationContext());
-        if (notesAdapter != null){
-            notesAdapter.resetCursor();
-            notesAdapter.notifyDataSetChanged();
-            updateUIAccordingToEncryptionStatus();
-        }
+
+        Intent intent = new Intent(getApplicationContext(), Crypt.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("CAME_FROM_NOTES_LIST", true);
+        startActivity(intent);
     }
 
     /*

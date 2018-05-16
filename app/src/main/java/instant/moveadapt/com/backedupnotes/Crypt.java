@@ -167,9 +167,12 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         } else if (v == doneBtn){
             //if this condition becomes true there is no point in
             //making the ecryption/decryption
-            if (text.getText() == null ||
-                    text.getText().equals(""))
+            if (text.getText().toString() == null ||
+                    text.getText().toString().equals("")){
+                PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
+                finish();
                 return;
+            }
 
             if (notesAreEncrypted()){
                 cachePassword(text.getText().toString());
