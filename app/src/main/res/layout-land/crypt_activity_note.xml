@@ -40,7 +40,7 @@
         android:layout_marginTop="80dp">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:gravity="center"
@@ -58,7 +58,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:id="@+id/crypt_activity_note_btn_1"
                     android:text="1"/>
                 <Button
@@ -68,7 +68,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="2"
                     android:id="@+id/crypt_activity_note_btn_2"/>
                 <Button
@@ -78,7 +78,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="3"
                     android:id="@+id/crypt_activity_note_btn_3"/>
 
@@ -89,7 +89,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="4"
                     android:id="@+id/crypt_activity_note_btn_4"/>
                 <Button
@@ -99,7 +99,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="5"
                     android:id="@+id/crypt_activity_note_btn_5"/>
                 <Button
@@ -109,7 +109,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="6"
                     android:id="@+id/crypt_activity_note_btn_6"/>
 
@@ -120,7 +120,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="7"
                     android:id="@+id/crypt_activity_note_btn_7"/>
                 <Button
@@ -130,7 +130,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="8"
                     android:id="@+id/crypt_activity_note_btn_8"/>
                 <Button
@@ -140,7 +140,7 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="9"
                     android:id="@+id/crypt_activity_note_btn_9"/>
 
@@ -151,14 +151,14 @@
                     android:background="@drawable/number_selector"
                     android:alpha="0.6"
                     android:fontFamily="monospace"
-                    android:textSize="30sp"
+                    android:textSize="26sp"
                     android:text="0"
                     android:id="@+id/crypt_activity_note_btn_0"/>
 
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_weight="1">

@@ -17,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+//import android.widget.Toolbar;
 
 import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
 import instant.moveadapt.com.backedupnotes.Database.DatabaseManager;
@@ -101,7 +102,9 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
             getSupportActionBar().setTitle("");
         }
 
-        CloudManager.downloadNotesFromCloud(getApplicationContext());
+        if (PreferenceManager.areEncrypted(getApplicationContext())) {
+            CloudManager.downloadNotesFromCloud(getApplicationContext());
+        }
 
         int notesCount = DatabaseManager.getNotesCount(getApplicationContext());
         boolean notesAreDecrypted = PreferenceManager.areEncrypted(getApplicationContext());
@@ -125,7 +128,7 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
             }
         }
 
-        if (PreferenceManager.exitWithoutEncrypt(getApplicationContext())){
+        if (PreferenceManager.exitWithoutEncrypt(getApplicationContext()) && !PreferenceManager.areEncrypted(getApplicationContext())){
                 Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
                 moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(moveOnIntent);
@@ -193,6 +196,7 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
                 EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key,
                         this, this);
+                CloudManager.updateCloudNotes(getApplicationContext(), null, null);
             }
 
         } else if (v == delBtn){
