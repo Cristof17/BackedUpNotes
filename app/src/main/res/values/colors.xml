@@ -6,4 +6,7 @@
     <color name="white">#FFFFFF</color>
     <color name="warning">#FF9100</color>
     <color name="notLoggedIn">#FF80AB</color>
+    <color name="logged_in">#FF009688</color>
+    <color name="logged_out">#FFE91E63</color>
+
 </resources>

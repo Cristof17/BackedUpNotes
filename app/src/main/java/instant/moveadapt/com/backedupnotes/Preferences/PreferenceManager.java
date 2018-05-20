@@ -67,4 +67,10 @@ public class PreferenceManager {
         editor.putBoolean(PREFERENCE_EXIT_WITHOUT_ENCRYPTION, exitWithoutEncryption);
         editor.commit();
     }
+
+    public static boolean arePartiallyDecrypted(Context context){
+        if (PreferenceManager.getLooksGoodPassword(context) != null)
+            return true;
+        return false;
+    }
 }

@@ -30,6 +30,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TabHost;
@@ -69,6 +70,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private TextView messageTextView;
     private LinearLayout popUpLinearLayout;
     private ProgressBar popUpProgressBar;
+    private FloatingActionButton settingsButton;
 
     private FloatingActionButton exitButton;
     private FloatingActionButton actionButton;
@@ -113,6 +115,16 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
         popUpLinearLayout = (LinearLayout)findViewById(R.id.activity_notes_list_popup_ll);
         popUpProgressBar = (ProgressBar) findViewById(R.id.activity_notes_list_popup_pb);
+//        settingsButton = (FloatingActionButton)findViewById(R.id.notes_list_activity_settings_btn);
+
+//        settingsButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+//                startActivity(settingsIntent);
+//            }
+//        });
+
         popUpLinearLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -134,10 +146,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), Crypt.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                intent.putExtra("CAME_FROM_NOTES_LIST", true);
-                startActivity(intent);
+                exit();
             }
         });
 
@@ -267,6 +276,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         FirebaseAuth.getInstance().signOut();
     }
+
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
@@ -514,13 +524,31 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     @Override
     public void onBackPressed() {
-        if (DatabaseManager.getNotesCount(getApplicationContext()) != 0) {
+        super.onBackPressed();
+        if (PreferenceManager.arePartiallyDecrypted(getApplicationContext())){
+            PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
+        }
+
+        if (!PreferenceManager.areEncrypted(getApplicationContext())){
+            PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
+        }
+        finish();
+    }
+
+    private void exit(){
+        if (!PreferenceManager.arePartiallyDecrypted(getApplicationContext()) && DatabaseManager.getNotesCount(getApplicationContext()) != 0) {
             Intent intent = new Intent(getApplicationContext(), Crypt.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             intent.putExtra("CAME_FROM_NOTES_LIST", true);
             startActivity(intent);
+        } else {
+            finish();
         }
-        super.onBackPressed();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override

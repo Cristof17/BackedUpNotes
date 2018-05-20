@@ -2,6 +2,7 @@ package instant.moveadapt.com.backedupnotes;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
@@ -135,6 +136,13 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
                 PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), false);
         }
 
+        if (PreferenceManager.arePartiallyDecrypted(getApplicationContext())) {
+            Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
+            moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(moveOnIntent);
+            PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), false);
+        }
+
         if (PreferenceManager.areEncrypted(getApplicationContext())){
             title.setText("enter password".toLowerCase());
         } else {
@@ -219,6 +227,7 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+
         if (text.getText().toString() == null ||
                 text.getText().toString().equals("")){
             PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
