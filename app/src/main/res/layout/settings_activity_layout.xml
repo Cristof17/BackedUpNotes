@@ -2,16 +2,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <Toolbar
+    <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:id="@+id/settings_activity_layout_toolbar"
         android:layout_height="@dimen/toolbar_diment">
 
-    </Toolbar>
+    </android.support.v7.widget.Toolbar>
 
-    <fragment
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="horizontal"
         android:layout_below="@id/settings_activity_layout_toolbar"
         android:id="@+id/settings_activity_layout_fragment"/>
 

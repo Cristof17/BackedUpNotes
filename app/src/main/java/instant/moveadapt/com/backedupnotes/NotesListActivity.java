@@ -107,6 +107,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         Log.d(TAG, "onCreate()");
         setContentView(R.layout.activity_notes_list);
 
+        if (PreferenceManager.areEncrypted(getApplicationContext())){
+            Intent decryptIntent = new Intent(getApplicationContext(), Crypt.class);
+            startActivity(decryptIntent);
+        }
+
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -115,15 +120,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
         popUpLinearLayout = (LinearLayout)findViewById(R.id.activity_notes_list_popup_ll);
         popUpProgressBar = (ProgressBar) findViewById(R.id.activity_notes_list_popup_pb);
-//        settingsButton = (FloatingActionButton)findViewById(R.id.notes_list_activity_settings_btn);
-
-//        settingsButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
-//                startActivity(settingsIntent);
-//            }
-//        });
+        settingsButton = (FloatingActionButton)findViewById(R.id.notes_list_activity_settings_btn);
+        settingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+                startActivity(settingsIntent);
+            }
+        });
 
         popUpLinearLayout.post(new Runnable() {
             @Override
@@ -273,8 +277,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         CloudManager.deleteNotesToBeDeletedFromCloud(getApplicationContext());
         updateUIAccordingToEncryptionStatus();
-
-        FirebaseAuth.getInstance().signOut();
     }
 
 
@@ -407,7 +409,6 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
-        FirebaseAuth.getInstance().signOut();
     }
 
     private void updateUIAccordingToEncryptionStatus(){

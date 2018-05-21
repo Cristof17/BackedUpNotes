@@ -144,9 +144,9 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         }
 
         if (PreferenceManager.areEncrypted(getApplicationContext())){
-            title.setText("enter password".toLowerCase());
+            title.setText("Please enter access code".toLowerCase());
         } else {
-            title.setText("set password".toLowerCase());
+            title.setText("Please set an access code".toLowerCase());
         }
     }
 

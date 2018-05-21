@@ -114,6 +114,10 @@ public class CloudManager {
         }
     }
 
+    public static void logout(){
+        FirebaseAuth.getInstance().signOut();
+    }
+
     public static String getRemoteNotesFolder() {
 
         FirebaseAuth mAuth = FirebaseAuth.getInstance();

@@ -7,11 +7,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:gravity="center_horizontal"
         android:layout_centerHorizontal="true"
         android:textSize="16sp"
         android:layout_margin="15dp"
         android:id="@+id/reverse_decryption_layout_explanation_tv"
-        android:text="If the notes don't look like before, you can reverse the decryption and try again with another password"/>
+        android:text="In case you entered an incorrect access code your data will look messy"/>
 
 </LinearLayout>
