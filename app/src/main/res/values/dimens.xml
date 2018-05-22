@@ -2,5 +2,5 @@
 <resources>
     <dimen name="action_bar_size">50dp</dimen>
     <dimen name="btn_width">80dp</dimen>
-    <dimen name="toolbar_diment">60dp</dimen>
+    <dimen name="toolbar_diment">55dp</dimen>
 </resources>

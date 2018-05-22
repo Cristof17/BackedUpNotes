@@ -13,7 +13,7 @@
         android:id="@+id/notes_list_activity_toolbar"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        android:elevation="0dp">
+        app:elevation="0dp">
 
         <android.support.v7.widget.Toolbar
             android:layout_width="match_parent"

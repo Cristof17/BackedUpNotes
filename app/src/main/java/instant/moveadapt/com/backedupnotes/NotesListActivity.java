@@ -445,7 +445,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
             actionButton.setAlpha(1.0f);
             exitButton.setEnabled(false);
-            exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
+            exitButton.setImageResource(R.drawable.ic_baseline_vpn_key_faded);
 //            exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
 //            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             settingsButton.setImageResource(R.drawable.ic_baseline_settings);
