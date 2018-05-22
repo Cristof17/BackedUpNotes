@@ -9,6 +9,9 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.ContentObserver;
+import android.net.Uri;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
@@ -64,7 +67,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private static final int INTERNET_PERMISSION_REQUEST_CODE = 101;
     public static final int READ_WRITE_PERMISSION_REQ_CODE = 102;
 
-    private static final String TAG = "[NOTE_LIST]";
+    private static final String TAG = "NOTES_LIST";
     private RecyclerView notesRecyclerView;
     private NoteListRecyclerViewAdapter notesAdapter;
     private TextView messageTextView;
@@ -109,6 +112,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         if (PreferenceManager.areEncrypted(getApplicationContext())){
             Intent decryptIntent = new Intent(getApplicationContext(), Crypt.class);
+            decryptIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(decryptIntent);
         }
 
@@ -219,6 +223,19 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             getContentResolver().delete(NotesDatabase.DatabaseContract.URI,
                                     whereClause,
                                     whereArgs);
+                            getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI, true,
+                                    new ContentObserver(new Handler()) {
+                                        @Override
+                                        public void onChange(boolean selfChange) {
+                                            super.onChange(selfChange);
+                                        }
+
+                                        @Override
+                                        public void onChange(boolean selfChange, Uri uri) {
+                                            super.onChange(selfChange, uri);
+                                            Log.d(TAG, "onChange(): " + uri.toString());
+                                        }
+                                    });
                             CloudManager.deleteNoteFromCloud(getApplicationContext(), note);
                         }
                         actionMode.finish();
@@ -417,14 +434,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             actionButton.setImageResource(R.drawable.ic_add_white);
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent)));
             actionButton.setAlpha(1.0f);
-            exitButton.setImageResource(R.drawable.ic_baseline_exit_to_app);
+            exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
             exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            settingsButton.setImageResource(R.drawable.ic_baseline_settings);
         }else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
             actionButton.setImageResource(R.drawable.ic_check_white);
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
             actionButton.setAlpha(1.0f);
-            exitButton.setImageResource(R.drawable.ic_baseline_exit_to_app);
+            exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
             exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            settingsButton.setImageResource(R.drawable.ic_baseline_settings);
         }
     }
 

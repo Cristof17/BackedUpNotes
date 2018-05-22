@@ -92,7 +92,7 @@ public class CloudManager {
             //send dummy note
             FirebaseDatabase db = FirebaseDatabase.getInstance();
             DatabaseReference dbRef = db.getReference();
-            DatabaseReference childRef = dbRef.child(getRemoteNotesFolder());
+            final DatabaseReference childRef = dbRef.child(getRemoteNotesFolder());
             childRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -100,9 +100,15 @@ public class CloudManager {
                     Iterator<DataSnapshot> dataIterator = data.iterator();
                     while (dataIterator.hasNext()){
                         Note currNote = dataIterator.next().getValue(Note.class);
-                        DatabaseManager.saveNoteLocally(context, currNote);
+                        if (!currNote.getText().toString().equals("Dummy")) {
+                            DatabaseManager.saveNoteLocally(context, currNote);
+                        }
 
                     }
+                    //when uploading encrypted notes to the cloud the
+                    //callback above fires although no download has been initiated
+                    //and this results in saving junk
+                    childRef.removeEventListener(this);
                 }
 
                 @Override
@@ -137,7 +143,7 @@ public class CloudManager {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         if (mAuth == null || mAuth.getCurrentUser() == null)
             return;
-        Note dummyNote = new Note(UUID.randomUUID().toString(), "Dummy", -1);
+        Note dummyNote = new Note(UUID.fromString("45db7961-6102-4a25-9447-387f4562319f").toString(), "Dummy", -1);
         saveSingleNoteToCloud(dummyNote, null);
         deleteNoteFromCloud(context, dummyNote);
     }

@@ -32,6 +32,7 @@ import instant.moveadapt.com.backedupnotes.R;
 
 public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRecyclerViewAdapter.MyViewHolder> {
 
+    private static final String TAG = "NOTES_LIST_RECYCLER";
     private NotesListActivity context;
     /*
      * This cursor is used to cache notes from database
@@ -209,6 +210,7 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                     null,
                     sortOrder);
 
+            Log.d(TAG, (cursor != null) ? cursor.getCount()+"" : "0");
             if (cursor != null) {
                 return cursor.getCount();
             } else {

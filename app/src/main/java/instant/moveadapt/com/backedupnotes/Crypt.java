@@ -62,7 +62,6 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
         super.onCreate(savedInstanceState);
 
         Intent startIntent = null;
-
         setContentView(R.layout.crypt_activity_note);
         btn1 = (Button)findViewById(R.id.crypt_activity_note_btn_1);
         btn2 = (Button)findViewById(R.id.crypt_activity_note_btn_2);
@@ -116,26 +115,7 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
             moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(moveOnIntent);
         }
-
-        if (startIntent != null){
-            boolean cameFromNotesListActivity = startIntent.getBooleanExtra("CAME_FROM_NOTES_LIST", false);
-            if (!cameFromNotesListActivity){
-                //move on to the next activity
-                if (notesAreDecrypted){
-                    Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
-                    moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(moveOnIntent);
-                }
-            }
-        }
-
-        if (PreferenceManager.exitWithoutEncrypt(getApplicationContext()) && !PreferenceManager.areEncrypted(getApplicationContext())){
-                Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
-                moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(moveOnIntent);
-                PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), false);
-        }
-
+        
         if (PreferenceManager.arePartiallyDecrypted(getApplicationContext())) {
             Intent moveOnIntent = new Intent(getApplicationContext(), NotesListActivity.class);
             moveOnIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
