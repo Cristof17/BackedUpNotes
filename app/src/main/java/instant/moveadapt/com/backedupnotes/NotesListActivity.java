@@ -34,6 +34,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TabHost;
@@ -73,9 +74,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private TextView messageTextView;
     private LinearLayout popUpLinearLayout;
     private ProgressBar popUpProgressBar;
-    private FloatingActionButton settingsButton;
+    private ImageButton settingsButton;
 
-    private FloatingActionButton exitButton;
+    private ImageButton exitButton;
     private FloatingActionButton actionButton;
 
     /*
@@ -119,12 +120,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        exitButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_exit_btn);
+        exitButton = (ImageButton) findViewById(R.id.notes_list_activity_exit_btn);
         rootLayout = (CoordinatorLayout)findViewById(R.id.notes_list_coordinator_layout);
         notesAdapter = new NoteListRecyclerViewAdapter(NotesListActivity.this, this);
         popUpLinearLayout = (LinearLayout)findViewById(R.id.activity_notes_list_popup_ll);
         popUpProgressBar = (ProgressBar) findViewById(R.id.activity_notes_list_popup_pb);
-        settingsButton = (FloatingActionButton)findViewById(R.id.notes_list_activity_settings_btn);
+        settingsButton = (ImageButton) findViewById(R.id.notes_list_activity_settings_btn);
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -437,7 +438,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
             exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             exitButton.setEnabled(true);
-            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+//            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             settingsButton.setImageResource(R.drawable.ic_baseline_settings);
         }else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
             actionButton.setImageResource(R.drawable.ic_check_white);
@@ -445,8 +446,8 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             actionButton.setAlpha(1.0f);
             exitButton.setEnabled(false);
             exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
-            exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
-            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+//            exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+//            settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             settingsButton.setImageResource(R.drawable.ic_baseline_settings);
         }
     }
