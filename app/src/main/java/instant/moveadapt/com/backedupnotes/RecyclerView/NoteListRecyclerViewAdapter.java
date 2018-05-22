@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.ActionMode;
 import android.support.v7.widget.RecyclerView;
@@ -119,17 +120,14 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
                         /*
                          * Do not allow editting show the message to decrypt first
                          */
-                        Toast.makeText(context, "Notes need to be decrypted to be edited",
-                                Toast.LENGTH_LONG)
-                                .show();
+                        showSnackbar("Notes need to be decrypted to be edited");
+
                     } else if (!notesAreCorrectlyDecrypted()) {
                         /*
                          * Do not allow editting show the check decryption first
                          */
-                        Toast.makeText(context, "Do notes look good ? You need to do a checking first " +
-                                        "by pressing check button",
-                                Toast.LENGTH_LONG)
-                                .show();
+                        showSnackbar("Do notes look good ? You need to do a checking first " +
+                                "by pressing check button");
                     } else {
                         /*
                          * Edit the note
@@ -178,6 +176,18 @@ public class NoteListRecyclerViewAdapter extends RecyclerView.Adapter<NoteListRe
         }else{
             rootView.setSelected(false);
         }
+    }
+
+    private void showSnackbar(String message){
+        final Snackbar alert = Snackbar.make(context.getRootLayout(), message,
+                3000);
+        alert.setAction("Dismiss", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alert.dismiss();
+            }
+        });
+        alert.show();
     }
 
     public boolean hasNotes(){

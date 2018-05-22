@@ -46,6 +46,7 @@ public class LoginPreference extends Preference{
         LayoutInflater inflater = getContext().getSystemService(LayoutInflater.class);
         View rootView = inflater.inflate(R.layout.login_preference_layout, parent, false);
         TextView title = (TextView)rootView.findViewById(R.id.login_preference_layout_title);
+        TextView summary = (TextView)rootView.findViewById(R.id.login_preference_layout_summary);
         Button value = (Button)rootView.findViewById(R.id.login_preference_layout_value);
         ImageView icon = (ImageView)rootView.findViewById(R.id.login_preference_layout_icon);
 
@@ -60,11 +61,13 @@ public class LoginPreference extends Preference{
                 }
             });
             value.setVisibility(View.VISIBLE);
+            summary.setVisibility(View.GONE);
         } else {
             title.setTextColor(getContext().getColor(R.color.logged_out));
             icon.setImageResource(R.drawable.ic_account);
             title.setText("Create a storage account");
             value.setVisibility(View.GONE);
+            summary.setVisibility(View.VISIBLE);
         }
         return rootView;
     }

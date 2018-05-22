@@ -436,12 +436,14 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             actionButton.setAlpha(1.0f);
             exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
             exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
+            exitButton.setEnabled(true);
             settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             settingsButton.setImageResource(R.drawable.ic_baseline_settings);
         }else if (!EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext())){
             actionButton.setImageResource(R.drawable.ic_check_white);
             actionButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.warning)));
             actionButton.setAlpha(1.0f);
+            exitButton.setEnabled(false);
             exitButton.setImageResource(R.drawable.ic_baseline_vpn_key);
             exitButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
             settingsButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getApplicationContext(), R.color.white)));
@@ -490,7 +492,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         if(DatabaseManager.getNotesCount(getApplicationContext()) == 0){
             exitButton.setEnabled(false);
         } else {
-            exitButton.setEnabled(true);
+            if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext()))
+                exitButton.setEnabled(true);
+            else
+                exitButton.setEnabled(false);
         }
     }
 
@@ -585,5 +590,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         if (countNotes == maxNotes){
             finish();
         }
+    }
+
+    public CoordinatorLayout getRootLayout(){
+        return rootLayout;
     }
 }

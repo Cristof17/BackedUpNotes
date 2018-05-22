@@ -176,6 +176,7 @@ public class CloudManager {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         if (mAuth == null || mAuth.getCurrentUser() == null) {
             storeNoteForLaterDelete(context, note);
+            return;
         }
 
         FirebaseDatabase firebaseDb = FirebaseDatabase.getInstance();
