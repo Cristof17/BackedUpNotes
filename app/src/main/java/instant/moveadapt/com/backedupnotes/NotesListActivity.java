@@ -14,15 +14,18 @@ import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.ArraySet;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,6 +48,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.Set;
+import java.util.logging.LogManager;
+
 import javax.crypto.SecretKey;
 import instant.moveadapt.com.backedupnotes.Cloud.CloudManager;
 import instant.moveadapt.com.backedupnotes.Cloud.NoteUploadedCallback;
@@ -104,6 +109,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     private CoordinatorLayout rootLayout;
     private int countNotes;
     private int maxNotes;
+    private AppBarLayout toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +124,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }
 
         actionButton = (FloatingActionButton) findViewById(R.id.notes_list_activity_action_btn);
+        toolbar = (AppBarLayout)findViewById(R.id.notes_list_activity_toolbar);
         messageTextView = (TextView) findViewById(R.id.error_text_view);
         notesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         exitButton = (ImageButton) findViewById(R.id.notes_list_activity_exit_btn);
@@ -249,6 +256,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
             @Override
             public void onDestroyActionMode(ActionMode mode) {
+                Log.d(TAG, "onDestroyActionMode()");
                 actionMode = null;
                 notesAdapter.resetCursor();
 //                appBarLayout.setVisibility(View.VISIBLE);
@@ -262,6 +270,9 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
                             false);
                     updateUIAccordingToEncryptionStatus();
                     exitButton.setEnabled(false);
+                    toolbar.setVisibility(View.INVISIBLE);
+                }else{
+                    toolbar.setVisibility(View.VISIBLE);
                 }
             }
         };
@@ -295,12 +306,18 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
         CloudManager.deleteNotesToBeDeletedFromCloud(getApplicationContext());
         updateUIAccordingToEncryptionStatus();
+        if (DatabaseManager.getNotesCount(this) == 0){
+            toolbar.setVisibility(View.INVISIBLE);
+        }else{
+            toolbar.setVisibility(View.VISIBLE);
+        }
     }
 
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        Log.d(TAG, "onPostCreate()");
     }
 
     private AlertDialog createReverseDecryptionDialog() {
@@ -368,6 +385,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "onRequestPermission()");
         if (requestCode == READ_WRITE_PERMISSION_REQ_CODE){
             int result = grantResults[0];
 
@@ -415,10 +433,10 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         super.onConfigurationChanged(newConfig);
         switch (newConfig.orientation){
             case Configuration.ORIENTATION_LANDSCAPE:
-                Log.d(TAG, "Landscape");
+                Log.d(TAG, "onConfigurationChanged():Landscape");
                 break;
             case Configuration.ORIENTATION_PORTRAIT:
-                Log.d(TAG, "Portrait");
+                Log.d(TAG, "onConfigurationChanged():Portrait");
                 break;
         }
     }
@@ -490,9 +508,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume()");
         if(DatabaseManager.getNotesCount(getApplicationContext()) == 0){
             exitButton.setEnabled(false);
+            toolbar.setVisibility(View.INVISIBLE);
         } else {
+            toolbar.setVisibility(View.VISIBLE);
             if (EncryptManager.notesAreCorrectlyDecrypted(getApplicationContext()))
                 exitButton.setEnabled(true);
             else
@@ -502,6 +523,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     @Override
     public void onNoteUploaded(Note note) {
+        Log.d(TAG, "onNoteUploaded()");
         popUpProgressBar.setProgress(popUpProgressBar.getProgress() + 1);
         if (popUpProgressBar.getProgress() == popUpProgressBar.getMax())
             reverseAnimateViews();
@@ -510,6 +532,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
 
     @Override
     public void onStartUpload(int count) {
+        Log.d(TAG, "onStartUpload()");
         popUpProgressBar.setMax(count);
         if (popUpLinearLayout.getMeasuredHeight() > 0) {
             animateViews();
@@ -553,6 +576,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        Log.d(TAG, "onBackPressed()");
         if (PreferenceManager.arePartiallyDecrypted(getApplicationContext())){
             PreferenceManager.setExitWithoutEncrypt(getApplicationContext(), true);
         }
@@ -577,10 +601,12 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     protected void onStop() {
         super.onStop();
+        Log.d(TAG, "onStop");
     }
 
     @Override
     public void cryptographyOperationStarted(boolean isEncryption) {
+        Log.d(TAG, "cryptographyOperationStarted()");
         maxNotes = DatabaseManager.getNotesCount(getApplicationContext());
         countNotes = 0;
     }
@@ -588,6 +614,7 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
     @Override
     public void cryptUpdate(boolean isEncryption) {
         countNotes ++;
+        Log.d(TAG, "cryptUpdate()");
         if (countNotes == maxNotes){
             finish();
         }
