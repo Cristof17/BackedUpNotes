@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.design.widget.TabLayout;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.TabHost;
@@ -21,9 +22,15 @@ import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.KeySpec;
 
 /**
  * Created by cristof on 13.05.2018.
@@ -32,12 +39,8 @@ public class EncryptManager {
 
 
     private static String TAG = "ENCRYPTION_MANAGER";
-
-    public static boolean notesAreEncrypted(Context context){
-        boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.
-                areEncrypted(context);
-        return areEncrypted;
-    }
+    //TODO remove the keypair generatro
+    private static KeyPair keyPair;
 
     public static String generateKey(Context context) {
 
@@ -117,31 +120,6 @@ public class EncryptManager {
 
     }
 
-    private static void encryptSingleNote(Context context, Note note, String password, SecretKey key){
-        try {
-            ContentValues vals = new ContentValues();
-            String encryptedText = encrypt(note.text.getBytes("UTF-8"), password, key);
-            if (encryptedText == null) {
-                Toast.makeText(context, "Error when encrypting " +
-                        note.text, Toast.LENGTH_SHORT).show();
-                return;
-            }
-            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
-                    encryptedText);
-            ContentResolver resolver = context.getContentResolver();
-            String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
-            String[] whereArgs = new String[] {note.id.toString()};
-
-            resolver.update(NotesDatabase.DatabaseContract.URI,
-                    vals,
-                    whereClause,
-                    whereArgs
-            );
-        }catch (UnsupportedEncodingException e){
-            e.printStackTrace();
-        }
-    }
-
     public static void encryptAllNotes(Context context, String password, SecretKey key, CryptStartCallback
                                        startCallback,final CryptUpdateCallback updateCallback){
 
@@ -182,61 +160,21 @@ public class EncryptManager {
             context.getContentResolver().unregisterContentObserver(observer);
     }
 
-    public static void decryptAllNotes(Context context, String password, SecretKey key,
-                                       CryptStartCallback startCallback, final CryptUpdateCallback updateCallback){
-
-        ContentObserver observer = null;
-
-        setEncrypted(context, false);
-        if (startCallback != null)
-            startCallback.cryptographyOperationStarted(false);
-        if (updateCallback != null) {
-            observer = new ContentObserver(new Handler()) {
-                @Override
-                public void onChange(boolean selfChange, Uri uri) {
-                    super.onChange(selfChange, uri);
-                    if (uri.equals(NotesDatabase.DatabaseContract.URI)) {
-                        updateCallback.cryptUpdate(false);
-                    }
-                }
-            };
-            context.getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI,
-                    false, observer);
-        }
-
-        Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,
-                NotesDatabase.DatabaseContract.getTableColumns(),
-                null,
-                null,
-                null);
-
-        if (c != null && c.getCount() > 0) {
-            do {
-                c.moveToNext();
-                Note note = convertToNote(c);
-                decryptSingleNote(context, note, password, key);
-            } while (!c.isLast());
-        }
-
-        if (updateCallback != null)
-            context.getContentResolver().unregisterContentObserver(observer);
-    }
-
-    private static void decryptSingleNote(Context context, Note note, String password, SecretKey key){
+    private static void encryptSingleNote(Context context, Note note, String password, SecretKey key){
         try {
-
             ContentValues vals = new ContentValues();
-            String decryptedText = decrypt(note.text, password, key);
-            if (decryptedText == null) {
-                Log.e(TAG, "Error when decrypting " +
-                        note.text);
+            String encryptedText = encrypt(note.text.getBytes("UTF-8"), password, key);
+            if (encryptedText == null) {
+                Toast.makeText(context, "Error when encrypting " +
+                        note.text, Toast.LENGTH_SHORT).show();
                 return;
             }
             vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
-                    decryptedText);
+                    encryptedText);
             ContentResolver resolver = context.getContentResolver();
             String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
             String[] whereArgs = new String[] {note.id.toString()};
+
             resolver.update(NotesDatabase.DatabaseContract.URI,
                     vals,
                     whereClause,
@@ -304,6 +242,71 @@ public class EncryptManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void decryptAllNotes(Context context, String password, SecretKey key,
+                                       CryptStartCallback startCallback, final CryptUpdateCallback updateCallback){
+
+        ContentObserver observer = null;
+
+        setEncrypted(context, false);
+        if (startCallback != null)
+            startCallback.cryptographyOperationStarted(false);
+        if (updateCallback != null) {
+            observer = new ContentObserver(new Handler()) {
+                @Override
+                public void onChange(boolean selfChange, Uri uri) {
+                    super.onChange(selfChange, uri);
+                    if (uri.equals(NotesDatabase.DatabaseContract.URI)) {
+                        updateCallback.cryptUpdate(false);
+                    }
+                }
+            };
+            context.getContentResolver().registerContentObserver(NotesDatabase.DatabaseContract.URI,
+                    false, observer);
+        }
+
+        Cursor c = context.getContentResolver().query(NotesDatabase.DatabaseContract.URI,
+                NotesDatabase.DatabaseContract.getTableColumns(),
+                null,
+                null,
+                null);
+
+        if (c != null && c.getCount() > 0) {
+            do {
+                c.moveToNext();
+                Note note = convertToNote(c);
+                decryptSingleNote(context, note, password, key);
+            } while (!c.isLast());
+        }
+
+        if (updateCallback != null)
+            context.getContentResolver().unregisterContentObserver(observer);
+    }
+
+    private static void decryptSingleNote(Context context, Note note, String password, SecretKey key){
+        try {
+
+            ContentValues vals = new ContentValues();
+            String decryptedText = decrypt(note.text, password, key);
+            if (decryptedText == null) {
+                Log.e(TAG, "Error when decrypting " +
+                        note.text);
+                return;
+            }
+            vals.put(NotesDatabase.DatabaseContract.COLUMN_TEXT,
+                    decryptedText);
+            ContentResolver resolver = context.getContentResolver();
+            String whereClause = NotesDatabase.DatabaseContract._ID + " = ? ";
+            String[] whereArgs = new String[] {note.id.toString()};
+            resolver.update(NotesDatabase.DatabaseContract.URI,
+                    vals,
+                    whereClause,
+                    whereArgs
+            );
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+        }
     }
 
 
@@ -385,6 +388,77 @@ public class EncryptManager {
         n = new Note(id, text, timestamp);
 
         return n;
+    }
+
+    public static byte[] encryptRSANote(Context context, Note note, String password){
+        if (note == null){
+            return null;
+        }
+        if (password == null)
+            return null;
+
+//        KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder("AndroidKeyStore",
+//                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT);
+//        builder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP);
+//        builder.setRandomizedEncryptionRequired(true);
+//        KeyGenParameterSpec keySpec = builder.build();
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(4096);
+            KeyPair keyPair= generator.genKeyPair();
+
+            //TODO REmove this after debug
+            EncryptManager.keyPair = keyPair;
+            PublicKey publicKey = keyPair.getPublic();
+            Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] result = cipher.doFinal(note.getText().getBytes("UTF-8"));
+            Log.d("ENCRYPTION_MANAGER", "encrypted text is " + new String(result));
+            return result;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Note decryptRSANote(byte[] input, String password){
+        try {
+            Cipher cipher = Cipher.getInstance("RSA");
+            PrivateKey privateKey = keyPair.getPrivate();
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] array = cipher.doFinal(input);
+            String text = new String(array);
+            Note returnNote = new Note();
+            returnNote.setText(text);
+            return returnNote;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static boolean notesAreEncrypted(Context context){
+        boolean areEncrypted = instant.moveadapt.com.backedupnotes.Preferences.PreferenceManager.
+                areEncrypted(context);
+        return areEncrypted;
     }
 
 }

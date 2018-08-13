@@ -46,7 +46,10 @@ import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.security.KeyPair;
 import java.util.Set;
 import java.util.logging.LogManager;
 
@@ -311,6 +314,11 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
         }else{
             toolbar.setVisibility(View.VISIBLE);
         }
+
+        Note dummyNote = new Note();
+        dummyNote.setText("Hahah");
+        byte[] array = EncryptManager.encryptRSANote(this, dummyNote, "pass");
+        Note initialNote = EncryptManager.decryptRSANote(array, "pass");
     }
 
 
