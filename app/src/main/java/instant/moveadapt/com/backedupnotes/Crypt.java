@@ -180,7 +180,7 @@ public class Crypt extends AppCompatActivity implements View.OnClickListener, Cr
                 EncryptManager.decryptAllNotes(getApplicationContext(), text.getText().toString(), key,
                         this, this);
             } else {
-                EncryptManager.generateKey(getApplicationContext());
+                EncryptManager.generateSymetricKey(getApplicationContext());
                 SecretKey key = EncryptManager.getKey(getApplicationContext());
                 EncryptManager.encryptAllNotes(getApplicationContext(), text.getText().toString(), key,
                         this, this);

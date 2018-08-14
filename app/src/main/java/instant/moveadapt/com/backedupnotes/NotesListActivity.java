@@ -315,10 +315,24 @@ public class NotesListActivity extends AppCompatActivity implements SelectedRecy
             toolbar.setVisibility(View.VISIBLE);
         }
 
+//        Note dummyNote = new Note();
+//        StringBuilder builder = new StringBuilder();
+//        for(int i = 0; i < 100000; ++i){
+//            builder.append("This text is supposed to be totally wrong if the pass is slightly wrong");
+//        }
+//        dummyNote.setText(builder.toString());
+////        byte[] array = EncryptManager.encryptRSANote(this, dummyNote, "pass");
+////        Note initialNote = EncryptManager.decryptRSANote(array, "pass");
+//        EncryptManager.encryptRSAWithUpdate(dummyNote, "pass");
+        KeyPair pair = EncryptManager.generateRSAKeys();
+        StringBuilder textToBeEncrypted = new StringBuilder();
+        for (int i = 0; i < 100000; ++i) {
+            textToBeEncrypted.append("My dog needs to bark");
+        }
         Note dummyNote = new Note();
-        dummyNote.setText("Hahah");
-        byte[] array = EncryptManager.encryptRSANote(this, dummyNote, "pass");
-        Note initialNote = EncryptManager.decryptRSANote(array, "pass");
+        dummyNote.setText(textToBeEncrypted.toString());
+        byte[] encryptedKey = EncryptManager.encryptSymetricKeyWithRSA(pair.getPublic());
+        EncryptManager.decryptSymetricKeyWithRSA(encryptedKey, pair.getPrivate());
     }
 
 
